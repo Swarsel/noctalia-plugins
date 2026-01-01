@@ -15,13 +15,13 @@
     {
       "id": "fancy-audiovisualizer",
       "name": "Fancy Audiovisualizer",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "author": "Noctalia Team",
-      "description": "Lemmy's fancy audio visualizer with reactive rings, inspired by NCS.",
+      "description": "Lemmy's fancy circular audio visualizer.",
       "repository": "https://github.com/noctalia-dev/noctalia-plugins",
       "minNoctaliaVersion": "3.7.2",
       "license": "MIT",
-      "lastUpdated": "2025-12-29T19:56:42-05:00"
+      "lastUpdated": "2025-12-31T22:10:50-05:00"
     },
     {
       "id": "hello-world",
