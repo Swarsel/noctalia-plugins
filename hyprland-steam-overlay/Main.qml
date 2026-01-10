@@ -14,18 +14,28 @@ Item {
   property int screenWidth: 3440  // Default, will be updated
   property int screenHeight: 1440  // Default, will be updated
 
-  // Percentage-based layout (10% / 60% / 25% + gaps)
-  property int gapSize: 10
-  property int topMargin: screenHeight * 0.025  // 2.5% top
-  property int windowHeight: screenHeight * 0.95  // 95% height
+  // Shortcut to settings and defaults
+  readonly property var cfg: pluginApi?.pluginSettings || ({})
+  readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
 
-  property int friendsWidth: (screenWidth * 0.10) - gapSize
-  property int mainWidth: (screenWidth * 0.60) - (gapSize * 2)
-  property int chatWidth: (screenWidth * 0.25) - gapSize
+  // User-configurable settings with fallback chain
+  readonly property int gapSize: cfg.gapSize ?? defaults.gapSize ?? 10
+  readonly property real topMarginPercent: cfg.topMarginPercent ?? defaults.topMarginPercent ?? 2.5
+  readonly property real windowHeightPercent: cfg.windowHeightPercent ?? defaults.windowHeightPercent ?? 95
+  readonly property real friendsWidthPercent: cfg.friendsWidthPercent ?? defaults.friendsWidthPercent ?? 10
+  readonly property real mainWidthPercent: cfg.mainWidthPercent ?? defaults.mainWidthPercent ?? 60
+  readonly property real chatWidthPercent: cfg.chatWidthPercent ?? defaults.chatWidthPercent ?? 25
+
+  // Calculate pixel values from percentages (updates automatically when screen size changes)
+  readonly property int topMargin: Math.round(screenHeight * (topMarginPercent / 100))
+  readonly property int windowHeight: Math.round(screenHeight * (windowHeightPercent / 100))
+  readonly property int friendsWidth: Math.round((screenWidth * (friendsWidthPercent / 100)) - gapSize)
+  readonly property int mainWidth: Math.round((screenWidth * (mainWidthPercent / 100)) - (gapSize * 2))
+  readonly property int chatWidth: Math.round((screenWidth * (chatWidthPercent / 100)) - gapSize)
 
   // Calculate center offset for horizontal centering
-  property int totalWidth: friendsWidth + gapSize + mainWidth + gapSize + chatWidth
-  property int centerOffset: (screenWidth - totalWidth) / 2
+  readonly property int totalWidth: friendsWidth + gapSize + mainWidth + gapSize + chatWidth
+  readonly property int centerOffset: Math.round((screenWidth - totalWidth) / 2)
 
   // Logger helper functions (fallback to console if Logger not available)
   function logDebug(msg) {
