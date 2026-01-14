@@ -5,7 +5,6 @@ import Quickshell
 import Quickshell.Io
 import qs.Commons
 import qs.Widgets
-import qs.Services.UI
 
 Item {
   id: root
@@ -444,23 +443,6 @@ Item {
         }
 
         Item { Layout.fillWidth: true }
-
-        // Settings button
-        NIconButton {
-          icon: "settings"
-          tooltipText: "Settings"
-          baseSize: Style.baseWidgetSize * 0.8
-          onClicked: {
-            var screen = pluginApi?.panelOpenScreen;
-            // Fallback to primary screen if panelOpenScreen is not available (e.g. IPC toggle)
-            if (!screen && Quickshell.screens.length > 0) {
-              screen = Quickshell.screens[0];
-            }
-            if (screen && pluginApi?.manifest) {
-              BarService.openPluginSettings(screen, pluginApi.manifest);
-            }
-          }
-        }
       }
     }
 
