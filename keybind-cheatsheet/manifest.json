@@ -2,7 +2,7 @@
   "id": "keybind-cheatsheet",
   "name": "Keybind Cheatsheet",
   "version": "1.4.2",
-  "minNoctaliaVersion": "3.6.0",
+  "minNoctaliaVersion": "4.2.0",
   "author": "blacku",
   "license": "MIT",
   "description": "Universal keyboard shortcuts cheatsheet that automatically detects and displays keybindings for Hyprland or Niri compositors.",
