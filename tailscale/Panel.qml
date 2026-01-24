@@ -34,6 +34,26 @@ Item {
     return mainInstance?.filterIPv4(ips) || []
   }
 
+  function getOSIcon(os) {
+    if (!os) return "circle-check"
+    switch (os.toLowerCase()) {
+      case "linux":
+        return "brand-debian"
+      case "macos":
+        return "brand-apple"
+      case "ios":
+        return "device-mobile"
+      case "android":
+        return "device-mobile"
+      case "windows":
+        return "brand-windows"
+      default:
+        return "circle-check"
+    }
+  }
+
+
+
   function requireTerminal() {
     if (!isTerminalConfigured) {
       ToastService.showError(
@@ -413,7 +433,7 @@ Item {
                     spacing: Style.marginM
 
                     NIcon {
-                      icon: peerDelegate.peerOnline ? "circle-check" : "circle-x"
+                      icon: root.getOSIcon(peerDelegate.peerData.OS)
                       pointSize: Style.fontSizeM
                       color: peerDelegate.peerOnline ? Color.mPrimary : Color.mOnSurfaceVariant
                     }

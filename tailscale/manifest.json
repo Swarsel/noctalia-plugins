@@ -3,14 +3,14 @@
   "name": "Tailscale",
   "version": "1.0.0",
   "minNoctaliaVersion": "4.0.0",
-  "author": "noctalia",
+  "author": "nineluj",
   "license": "MIT",
   "repository": "https://github.com/noctalia-dev/noctalia-plugins",
   "description": "Show Tailscale status in the menu bar.",
   "tags": [
     "Bar",
     "Network",
-    "System"
+    "Panel"
   ],
   "entryPoints": {
     "main": "Main.qml",

@@ -99,7 +99,8 @@ Item {
                   "HostName": peer.HostName,
                   "DNSName": peer.DNSName,
                   "TailscaleIPs": ipv4s,
-                  "Online": peer.Online
+                  "Online": peer.Online,
+                  "OS": peer.OS
                 })
               }
             }
