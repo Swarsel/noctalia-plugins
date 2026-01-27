@@ -1310,7 +1310,7 @@ Item {
   // We need to reassign editorData to trigger the signal, e.g.: editorData = {...editorData}
 
   IpcHandler {
-    target: "plugin:keybind-beta"
+    target: "plugin:keybind-cheatsheet"
     function toggle() {
       logDebug("IPC toggle called");
       if (pluginApi) {
