@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Services.UI
 import qs.Widgets
 
 // World Clock Panel Component - Configuration Modal
@@ -126,6 +127,34 @@ Item {
             }
 
             Item { Layout.fillWidth: true }
+
+            NIconButton {
+              icon: "settings"
+              tooltipText: pluginApi?.tr("world-clock.settings.open-settings") || "Open settings"
+              baseSize: Style.baseWidgetSize * 0.8
+              onClicked: {
+                var screen = pluginApi?.panelOpenScreen;
+                if (screen) {
+                  pluginApi.closePanel(screen);
+                  Qt.callLater(function() {
+                    BarService.openPluginSettings(screen, pluginApi.manifest);
+                  });
+                } else if (pluginApi && pluginApi.withCurrentScreen) {
+                  pluginApi.withCurrentScreen(function(s) {
+                    pluginApi.closePanel(s);
+                    Qt.callLater(function() {
+                      BarService.openPluginSettings(s, pluginApi.manifest);
+                    });
+                  });
+                } else {
+                  try {
+                    pluginApi.openSettings(root.screen, root);
+                  } catch (e) {
+                    try { pluginApi.openSettings(); } catch (err) { Logger.w("WorldClock", "openSettings failed:", err); }
+                  }
+                }
+              }
+            }
           }
 
           Rectangle {

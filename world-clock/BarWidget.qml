@@ -7,7 +7,7 @@ import qs.Services.UI
 import qs.Widgets
 
 // World Clock Bar Widget Component
-Rectangle {
+Item {
   id: root
 
   property var pluginApi: null
@@ -43,25 +43,24 @@ Rectangle {
   property string currentTime: ""
   property string currentCity: ""
 
-  implicitWidth: Math.max(60, isVertical ? (Style.capsuleHeight || 32) : contentWidth)
-  implicitHeight: Math.max(32, isVertical ? contentHeight : (Style.capsuleHeight || 32))
-  radius: Style.radiusM || 8
-  color: Style.capsuleColor || "#1E1E1E"
-  border.color: Style.capsuleBorderColor || "#2E2E2E"
-  border.width: Style.capsuleBorderWidth || 1
-
-  readonly property real contentWidth: {
+  readonly property real visualContentWidth: {
     if (isVertical) return Style.capsuleHeight || 32;
     var iconWidth = Style.toOdd ? Style.toOdd(Style.capsuleHeight * 0.6) : 20;
     var textWidth = timeText ? (timeText.implicitWidth + cityText.implicitWidth + (Style.marginS || 4) * 2) : 100;
     return iconWidth + textWidth + (Style.marginM || 8) + 20;
   }
 
-  readonly property real contentHeight: {
+  readonly property real visualContentHeight: {
     if (!isVertical) return Style.capsuleHeight || 32;
     var iconHeight = Style.toOdd ? Style.toOdd(Style.capsuleHeight * 0.6) : 20;
     return iconHeight + (Style.marginS || 4) * 2;
   }
+
+  readonly property real contentWidth: Math.max(60, isVertical ? (Style.capsuleHeight || 32) : visualContentWidth)
+  readonly property real contentHeight: Math.max(32, isVertical ? visualContentHeight : (Style.capsuleHeight || 32))
+
+  implicitWidth: contentWidth
+  implicitHeight: contentHeight
 
   // Rotation timer
   Timer {
@@ -157,68 +156,81 @@ Rectangle {
     return `${currentCity}\n${currentTime}\n${pluginApi?.tr("world-clock.tooltip.click") || "Click to configure"}`;
   }
 
-  RowLayout {
-    anchors.fill: parent
-    anchors.leftMargin: isVertical ? 0 : (Style.marginM || 8)
-    anchors.rightMargin: isVertical ? 0 : 20
-    anchors.topMargin: isVertical ? (Style.marginS || 4) : 0
-    anchors.bottomMargin: isVertical ? (Style.marginS || 4) : 0
-    spacing: Style.marginS || 4
-    visible: !isVertical
+  Rectangle {
+    id: visualCapsule
+    x: Style.pixelAlignCenter(parent.width, width)
+    y: Style.pixelAlignCenter(parent.height, height)
+    width: root.contentWidth
+    height: root.contentHeight
+    radius: Style.radiusM || 8
+    color: mouseArea.containsMouse ? Color.mHover : (Style.capsuleColor || "#1E1E1E")
+    border.color: Style.capsuleBorderColor || "#2E2E2E"
+    border.width: Style.capsuleBorderWidth || 1
 
-    NIcon {
-      icon: "history"
-      color: Color.mPrimary || "#2196F3"
-      pointSize: Style.toOdd ? Style.toOdd(Style.capsuleHeight * 0.5) : 16
-      Layout.alignment: Qt.AlignVCenter
+    RowLayout {
+      anchors.fill: parent
+      anchors.leftMargin: isVertical ? 0 : (Style.marginM || 8)
+      anchors.rightMargin: isVertical ? 0 : 20
+      anchors.topMargin: isVertical ? (Style.marginS || 4) : 0
+      anchors.bottomMargin: isVertical ? (Style.marginS || 4) : 0
+      spacing: Style.marginS || 4
+      visible: !isVertical
+
+      NIcon {
+        icon: "history"
+        color: Color.mPrimary || "#2196F3"
+        pointSize: Style.toOdd ? Style.toOdd(Style.capsuleHeight * 0.5) : 16
+        Layout.alignment: Qt.AlignVCenter
+      }
+
+      NText {
+        id: cityText
+        text: root.currentCity
+        color: mouseArea.containsMouse ? Color.mOnHover : (Color.mOnSurface || "#FFFFFF")
+        pointSize: Style.barFontSize || 11
+        applyUiScale: false
+        Layout.alignment: Qt.AlignVCenter
+      }
+
+      NText {
+        id: timeText
+        text: root.currentTime
+        color: Color.mPrimary || "#2196F3"
+        pointSize: Style.barFontSize || 11
+        font.weight: Font.Bold
+        applyUiScale: false
+        Layout.alignment: Qt.AlignVCenter
+      }
     }
 
-    NText {
-      id: cityText
-      text: root.currentCity
-      color: Color.mOnSurface || "#FFFFFF"
-      pointSize: Style.barFontSize || 11
-      applyUiScale: false
-      Layout.alignment: Qt.AlignVCenter
-    }
+    // Vertical layout
+    ColumnLayout {
+      anchors.fill: parent
+      anchors.margins: Style.marginS || 4
+      spacing: Style.marginXS || 2
+      visible: isVertical
 
-    NText {
-      id: timeText
-      text: root.currentTime
-      color: Color.mPrimary || "#2196F3"
-      pointSize: Style.barFontSize || 11
-      font.weight: Font.Bold
-      applyUiScale: false
-      Layout.alignment: Qt.AlignVCenter
-    }
-  }
+      NIcon {
+        icon: "history"
+        color: Color.mPrimary || "#2196F3"
+        pointSize: Style.toOdd ? Style.toOdd(Style.capsuleHeight * 0.45) : 14
+        Layout.alignment: Qt.AlignHCenter
+      }
 
-  // Vertical layout
-  ColumnLayout {
-    anchors.fill: parent
-    anchors.margins: Style.marginS || 4
-    spacing: Style.marginXS || 2
-    visible: isVertical
-
-    NIcon {
-      icon: "history"
-      color: Color.mPrimary || "#2196F3"
-      pointSize: Style.toOdd ? Style.toOdd(Style.capsuleHeight * 0.45) : 14
-      Layout.alignment: Qt.AlignHCenter
-    }
-
-    NText {
-      text: root.currentTime.substring(0, 5)
-      color: Color.mOnSurface || "#FFFFFF"
-      pointSize: (Style.barFontSize || 11) * 0.7
-      applyUiScale: false
-      Layout.alignment: Qt.AlignHCenter
-      visible: enabledTimezones.length > 0
+      NText {
+        text: root.currentTime.substring(0, 5)
+        color: mouseArea.containsMouse ? Color.mOnHover : (Color.mOnSurface || "#FFFFFF")
+        pointSize: (Style.barFontSize || 11) * 0.7
+        applyUiScale: false
+        Layout.alignment: Qt.AlignHCenter
+        visible: enabledTimezones.length > 0
+      }
     }
   }
 
   // Mouse interaction
   MouseArea {
+    id: mouseArea
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
@@ -226,7 +238,7 @@ Rectangle {
 
     onClicked: {
       if (pluginApi) {
-        pluginApi.openPanel(screen);
+        pluginApi.openPanel(root.screen, root);
       }
     }
 
@@ -235,7 +247,7 @@ Rectangle {
         TooltipService.show(root, tooltipText, BarService.getTooltipDirection());
       }
     }
-    
+
     onExited: {
       TooltipService.hide();
     }

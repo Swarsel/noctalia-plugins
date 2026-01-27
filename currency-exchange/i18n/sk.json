@@ -1,0 +1,95 @@
+{
+  "currencies": {
+    "AUD": "Austrálsky dolár",
+    "BRL": "Brazílsky real",
+    "CAD": "Kanadský dolár",
+    "CHF": "Švajčiarsky frank",
+    "CNY": "Čínsky jüan",
+    "CZK": "Česká koruna",
+    "DKK": "Dánska koruna",
+    "EUR": "Euro",
+    "GBP": "Britská libra",
+    "HKD": "Hongkonský dolár",
+    "HUF": "Maďarský forint",
+    "IDR": "Indonézska rupia",
+    "ILS": "Izraelský šekel",
+    "INR": "Indická rupia",
+    "ISK": "Islandská koruna",
+    "JPY": "Japonský jen",
+    "KRW": "Juhokórejský won",
+    "MXN": "Mexické peso",
+    "MYR": "Malajzijský ringgit",
+    "NOK": "Nórska koruna",
+    "NZD": "Novozélandský dolár",
+    "PHP": "Filipínske peso",
+    "PLN": "Poľský zlotý",
+    "RON": "Rumunský leu",
+    "SEK": "Švédska koruna",
+    "SGD": "Singapurský dolár",
+    "THB": "Thajský baht",
+    "TRY": "Turecká líra",
+    "USD": "Americký dolár",
+    "ZAR": "Juhoafrický rand"
+  },
+  "launcher": {
+    "command_description": "Rýchly prevod mien (napr. >fx 100 USD EUR)",
+    "convert_example": "Previesť {amount} {from} na {to}",
+    "convert_to_default": "Previesť {amount} {from} na {to} (predvolené)",
+    "currency_not_found": "Kód meny nenájdený v kurzoch",
+    "error_retry": "Skontroluj pripojenie k internetu. Klikni pre opakovanie.",
+    "fetching": "Načítavanie z frankfurter.app",
+    "loading": "Načítavanie kurzov...",
+    "rate_click_copy": "Kurz: 1 {from} = {rate} {to} | Klikni pre kopírovanie",
+    "reverse_rate": "Opačný kurz | Klikni pre kopírovanie",
+    "show_rate": "Zobraziť kurz 1 {from} na {to}",
+    "try_valid_code": "Zadaj platný kód meny (napr. USD, EUR, PLN)",
+    "unknown_currency": "Neznáma mena: {currency}"
+  },
+  "panel": {
+    "close": "Zavrieť",
+    "copy_result": "Kopírovať výsledok",
+    "error": "Nepodarilo sa načítať kurzy",
+    "loading": "Načítavanie kurzov...",
+    "rate_format": "1 {from} = {rate} {to}",
+    "refresh": "Obnoviť kurzy",
+    "settings": "Nastavenia",
+    "swap": "Vymeniť meny",
+    "title": "Prevodník Mien",
+    "updated": "Aktualizované {time}"
+  },
+  "plugin": {
+    "short_title": "FX",
+    "title": "Výmena Mien"
+  },
+  "settings": {
+    "display_mode": "Režim Zobrazenia",
+    "display_mode_description": "Koľko informácií zobraziť vo widgete",
+    "display_modes": {
+      "compact": "Kompaktný (číslo kurzu)",
+      "full": "Plný (1 USD = 0.85 EUR)",
+      "icon": "Iba ikona"
+    },
+    "general": "Všeobecné Nastavenia",
+    "intervals": {
+      "15": "15 minút",
+      "180": "3 hodiny",
+      "30": "30 minút",
+      "360": "6 hodín",
+      "60": "1 hodina",
+      "720": "12 hodín"
+    },
+    "refresh_interval": "Interval Aktualizácie",
+    "refresh_interval_description": "Ako často automaticky aktualizovať kurzy",
+    "source_currency": "Zdrojová Mena",
+    "source_currency_description": "Predvolená mena pre prevod",
+    "target_currency": "Cieľová Mena",
+    "target_currency_description": "Predvolená mena výsledku",
+    "widget": "Nastavenia Widgetu"
+  },
+  "widget": {
+    "click_to_open": "Klikni pre otvorenie prevodníka",
+    "error": "Nepodarilo sa načítať kurzy, skontroluj pripojenie k internetu.",
+    "loading": "Načítavanie kurzov...",
+    "rate_format": "1 {from} = {rate} {to}"
+  }
+}

@@ -4,7 +4,7 @@ import Quickshell
 import qs.Commons
 import qs.Widgets
 
-Rectangle {
+Item {
   id: root
 
   property var pluginApi: null
@@ -12,10 +12,6 @@ Rectangle {
   property ShellScreen screen
   property string widgetId: ""
   property string section: ""
-
-  implicitWidth: barIsVertical ? Style.capsuleHeight : contentRow.implicitWidth + Style.marginM * 2
-  implicitHeight: Style.capsuleHeight
-
 
   function getIntValue(value, defaultValue) {
     return (typeof value === 'number') ? Math.floor(value) : defaultValue;
@@ -28,8 +24,11 @@ Rectangle {
   readonly property string barPosition: Settings.data.bar.position || "top"
   readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
 
-  color: Style.capsuleColor
-  radius: Style.radiusL
+  readonly property real contentWidth: barIsVertical ? Style.capsuleHeight : contentRow.implicitWidth + Style.marginM * 2
+  readonly property real contentHeight: Style.capsuleHeight
+
+  implicitWidth: contentWidth
+  implicitHeight: contentHeight
 
   Connections {
     target: Color
@@ -37,28 +36,39 @@ Rectangle {
     function onMOnSurfaceChanged() { }
   }
 
-  RowLayout {
-    id: contentRow
-    anchors.centerIn: parent
-    spacing: Style.marginS
+  // Visual capsule - pixel-perfect centered
+  Rectangle {
+    id: visualCapsule
+    x: Style.pixelAlignCenter(parent.width, width)
+    y: Style.pixelAlignCenter(parent.height, height)
+    width: root.contentWidth
+    height: root.contentHeight
+    color: mouseArea.containsMouse ? Color.mHover : Style.capsuleColor
+    radius: Style.radiusL
 
-    NIcon {
-      icon: "checklist"
-      applyUiScale: false
-      color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
-    }
+    RowLayout {
+      id: contentRow
+      anchors.centerIn: parent
+      spacing: Style.marginS
 
-    NText {
-      visible: !barIsVertical
-      text: {
-        var count = activeCount;
-        var key = count === 1 ? "bar_widget.todo_count_singular" : "bar_widget.todo_count_plural";
-        var text = pluginApi?.tr(key) || (count + " todo" + (count !== 1 ? 's' : ''));
-        return text.replace("{count}", count);
+      NIcon {
+        icon: "checklist"
+        applyUiScale: false
+        color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
       }
-      color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
-      pointSize: Style.barFontSize
-      font.weight: Font.Medium
+
+      NText {
+        visible: !barIsVertical
+        text: {
+          var count = activeCount;
+          var key = count === 1 ? "bar_widget.todo_count_singular" : "bar_widget.todo_count_plural";
+          var text = pluginApi?.tr(key) || (count + " todo" + (count !== 1 ? 's' : ''));
+          return text.replace("{count}", count);
+        }
+        color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
+        pointSize: Style.barFontSize
+        font.weight: Font.Medium
+      }
     }
   }
 
@@ -67,14 +77,6 @@ Rectangle {
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
-
-    onEntered: {
-      root.color = Color.mHover;
-    }
-
-    onExited: {
-      root.color = Style.capsuleColor;
-    }
 
     onClicked: {
       if (pluginApi) {

@@ -5,7 +5,7 @@ import qs.Commons
 import qs.Widgets
 
 
-Rectangle {
+Item {
   id: root
 
   // Plugin API (injected by PluginService)
@@ -16,40 +16,43 @@ Rectangle {
   property string widgetId: ""
   property string section: ""
 
-  implicitWidth: row.implicitWidth + Style.marginS * 2
-  implicitHeight: Style.barHeight
+  readonly property real contentWidth: row.implicitWidth + Style.marginS * 2
+  readonly property real contentHeight: Style.barHeight
 
-  color: Style.capsuleColor
-  radius: Style.radiusL
+  implicitWidth: contentWidth
+  implicitHeight: contentHeight
 
-  RowLayout {
-    id: row
-    anchors.centerIn: parent
-    spacing: Style.marginS
+  Rectangle {
+    id: visualCapsule
+    x: Style.pixelAlignCenter(parent.width, width)
+    y: Style.pixelAlignCenter(parent.height, height)
+    width: root.contentWidth
+    height: root.contentHeight
+    color: mouseArea.containsMouse ? Color.mHover : Style.capsuleColor
+    radius: Style.radiusL
 
-    NIcon {
-      icon: "lamp"
-      color: Color.mPrimary
+    RowLayout {
+      id: row
+      anchors.centerIn: parent
+      spacing: Style.marginS
+
+      NIcon {
+        icon: "lamp"
+        color: Color.mPrimary
+      }
     }
   }
 
   MouseArea {
+    id: mouseArea
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
 
-    onEntered: {
-        root.color = Qt.lighter(Style.capsulecolor, 1.1)
-    }
-
-    onExited: {
-        root.color = Style.capsuleColor
-    }
-
     onClicked: {
-        if (pluginApi) {
-          pluginApi.openPanel(root.screen, root)
-        }
+      if (pluginApi) {
+        pluginApi.openPanel(root.screen, root)
+      }
     }
   }
 }

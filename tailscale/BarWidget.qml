@@ -5,7 +5,7 @@ import qs.Commons
 import qs.Widgets
 import qs.Services.UI
 
-Rectangle {
+Item {
   id: root
 
   property var pluginApi: null
@@ -19,59 +19,68 @@ Rectangle {
 
   readonly property var mainInstance: pluginApi?.mainInstance
 
-  implicitWidth: {
+  readonly property bool barIsVertical: Settings.data.bar.position === "left" || Settings.data.bar.position === "right"
+
+  readonly property real contentWidth: {
     if ((mainInstance?.compactMode ?? false) || !(mainInstance?.tailscaleRunning ?? false)) {
       return Style.capsuleHeight
     }
     return contentRow.implicitWidth + Style.marginM * 2
   }
-  implicitHeight: Style.capsuleHeight
+  readonly property real contentHeight: Style.capsuleHeight
 
-  readonly property bool barIsVertical: Settings.data.bar.position === "left" || Settings.data.bar.position === "right"
+  implicitWidth: contentWidth
+  implicitHeight: contentHeight
 
-  color: Style.capsuleColor
+  Rectangle {
+    id: visualCapsule
+    x: Style.pixelAlignCenter(parent.width, width)
+    y: Style.pixelAlignCenter(parent.height, height)
+    width: root.contentWidth
+    height: root.contentHeight
+    color: mouseArea.containsMouse ? Color.mHover : Style.capsuleColor
+    radius: Style.radiusL
 
-  radius: Style.radiusL
+    RowLayout {
+      id: contentRow
+      anchors.centerIn: parent
+      spacing: Style.marginS
+      layoutDirection: Qt.LeftToRight
 
-  RowLayout {
-    id: contentRow
-    anchors.centerIn: parent
-    spacing: Style.marginS
-    layoutDirection: Qt.LeftToRight
-
-    TailscaleIcon {
-      pointSize: Style.fontSizeL
-      applyUiScale: false
-      crossed: !(mainInstance?.tailscaleRunning ?? false)
-      color: {
-        if (mainInstance?.tailscaleRunning ?? false) return Color.mPrimary
-        return mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
-      }
-      opacity: (mainInstance?.isRefreshing ?? false) ? 0.5 : 1.0
-    }
-
-    // Show details when not in compact mode and there's something to show
-    ColumnLayout {
-      visible: !(mainInstance?.compactMode ?? false) && (mainInstance?.tailscaleRunning ?? false) && ((mainInstance?.showIpAddress ?? false) || (mainInstance?.showPeerCount ?? false))
-      spacing: 2
-      Layout.leftMargin: Style.marginXS
-      Layout.rightMargin: Style.marginS
-
-      // IP Address
-      NText {
-        visible: (mainInstance?.showIpAddress ?? false) && (mainInstance?.tailscaleIp ?? false)
-        text: mainInstance?.tailscaleIp || ""
-        pointSize: Style.fontSizeXS
-        color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
-        font.family: Settings.data.ui.fontFixed
+      TailscaleIcon {
+        pointSize: Style.fontSizeL
+        applyUiScale: false
+        crossed: !(mainInstance?.tailscaleRunning ?? false)
+        color: {
+          if (mainInstance?.tailscaleRunning ?? false) return Color.mPrimary
+          return mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
+        }
+        opacity: (mainInstance?.isRefreshing ?? false) ? 0.5 : 1.0
       }
 
-      // Peer count
-      NText {
-        visible: mainInstance?.showPeerCount ?? false
-        text: (mainInstance?.peerCount || 0) + " " + (pluginApi?.tr("panel.peers") || "peers")
-        pointSize: Style.fontSizeXS
-        color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
+      // Show details when not in compact mode and there's something to show
+      ColumnLayout {
+        visible: !(mainInstance?.compactMode ?? false) && (mainInstance?.tailscaleRunning ?? false) && ((mainInstance?.showIpAddress ?? false) || (mainInstance?.showPeerCount ?? false))
+        spacing: 2
+        Layout.leftMargin: Style.marginXS
+        Layout.rightMargin: Style.marginS
+
+        // IP Address
+        NText {
+          visible: (mainInstance?.showIpAddress ?? false) && (mainInstance?.tailscaleIp ?? false)
+          text: mainInstance?.tailscaleIp || ""
+          pointSize: Style.fontSizeXS
+          color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
+          font.family: Settings.data.ui.fontFixed
+        }
+
+        // Peer count
+        NText {
+          visible: mainInstance?.showPeerCount ?? false
+          text: (mainInstance?.peerCount || 0) + " " + (pluginApi?.tr("panel.peers") || "peers")
+          pointSize: Style.fontSizeXS
+          color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
+        }
       }
     }
   }
@@ -115,14 +124,6 @@ Rectangle {
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
     acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-    onEntered: {
-      root.color = Color.mHover
-    }
-
-    onExited: {
-      root.color = Style.capsuleColor
-    }
 
     onClicked: (mouse) => {
       if (mouse.button === Qt.LeftButton) {

@@ -1,0 +1,95 @@
+{
+  "currencies": {
+    "AUD": "Australisk dollar",
+    "BRL": "Brasiliansk real",
+    "CAD": "Kanadensisk dollar",
+    "CHF": "Schweizisk franc",
+    "CNY": "Kinesisk yuan",
+    "CZK": "Tjeckisk koruna",
+    "DKK": "Dansk krona",
+    "EUR": "Euro",
+    "GBP": "Brittiskt pund",
+    "HKD": "Hongkongdollar",
+    "HUF": "Ungersk forint",
+    "IDR": "Indonesisk rupiah",
+    "ILS": "Israelisk shekel",
+    "INR": "Indisk rupie",
+    "ISK": "Isländsk króna",
+    "JPY": "Japansk yen",
+    "KRW": "Sydkoreansk won",
+    "MXN": "Mexikansk peso",
+    "MYR": "Malaysisk ringgit",
+    "NOK": "Norsk krona",
+    "NZD": "Nyzeeländsk dollar",
+    "PHP": "Filippinsk peso",
+    "PLN": "Polsk złoty",
+    "RON": "Rumänsk leu",
+    "SEK": "Svensk krona",
+    "SGD": "Singaporiansk dollar",
+    "THB": "Thailändsk baht",
+    "TRY": "Turkisk lira",
+    "USD": "Amerikansk dollar",
+    "ZAR": "Sydafrikansk rand"
+  },
+  "launcher": {
+    "command_description": "Snabb valutaomvandling (t.ex. >fx 100 USD EUR)",
+    "convert_example": "Omvandla {amount} {from} till {to}",
+    "convert_to_default": "Omvandla {amount} {from} till {to} (standard)",
+    "currency_not_found": "Valutakod hittades inte i växelkurserna",
+    "error_retry": "Kontrollera din internetanslutning. Klicka för att försöka igen.",
+    "fetching": "Hämtar från frankfurter.app",
+    "loading": "Laddar växelkurser...",
+    "rate_click_copy": "Kurs: 1 {from} = {rate} {to} | Klicka för att kopiera",
+    "reverse_rate": "Omvänd kurs | Klicka för att kopiera",
+    "show_rate": "Visa kurs för 1 {from} till {to}",
+    "try_valid_code": "Ange en giltig valutakod (t.ex. USD, EUR, PLN)",
+    "unknown_currency": "Okänd valuta: {currency}"
+  },
+  "panel": {
+    "close": "Stäng",
+    "copy_result": "Kopiera resultat",
+    "error": "Kunde inte ladda kurser",
+    "loading": "Laddar kurser...",
+    "rate_format": "1 {from} = {rate} {to}",
+    "refresh": "Uppdatera kurser",
+    "settings": "Inställningar",
+    "swap": "Byt valutor",
+    "title": "Valutaomvandlare",
+    "updated": "Uppdaterad {time}"
+  },
+  "plugin": {
+    "short_title": "FX",
+    "title": "Valutaväxling"
+  },
+  "settings": {
+    "display_mode": "Visningsläge",
+    "display_mode_description": "Hur mycket information som visas i widgeten",
+    "display_modes": {
+      "compact": "Kompakt (kurstal)",
+      "full": "Fullständig (1 USD = 0.85 EUR)",
+      "icon": "Endast ikon"
+    },
+    "general": "Allmänna Inställningar",
+    "intervals": {
+      "15": "15 minuter",
+      "180": "3 timmar",
+      "30": "30 minuter",
+      "360": "6 timmar",
+      "60": "1 timme",
+      "720": "12 timmar"
+    },
+    "refresh_interval": "Uppdateringsintervall",
+    "refresh_interval_description": "Hur ofta växelkurser uppdateras automatiskt",
+    "source_currency": "Källvaluta",
+    "source_currency_description": "Standardvaluta att omvandla från",
+    "target_currency": "Målvaluta",
+    "target_currency_description": "Standardvaluta för resultatet",
+    "widget": "Widget-inställningar"
+  },
+  "widget": {
+    "click_to_open": "Klicka för att öppna omvandlaren",
+    "error": "Kunde inte ladda kurser, kontrollera din internetanslutning.",
+    "loading": "Laddar växelkurser...",
+    "rate_format": "1 {from} = {rate} {to}"
+  }
+}

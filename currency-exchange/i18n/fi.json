@@ -1,0 +1,95 @@
+{
+  "currencies": {
+    "AUD": "Australian dollari",
+    "BRL": "Brasilian real",
+    "CAD": "Kanadan dollari",
+    "CHF": "Sveitsin frangi",
+    "CNY": "Kiinan yuan",
+    "CZK": "Tšekin koruna",
+    "DKK": "Tanskan kruunu",
+    "EUR": "Euro",
+    "GBP": "Englannin punta",
+    "HKD": "Hongkongin dollari",
+    "HUF": "Unkarin forintti",
+    "IDR": "Indonesian rupia",
+    "ILS": "Israelin sekeli",
+    "INR": "Intian rupia",
+    "ISK": "Islannin kruunu",
+    "JPY": "Japanin jeni",
+    "KRW": "Etelä-Korean won",
+    "MXN": "Meksikon peso",
+    "MYR": "Malesian ringgit",
+    "NOK": "Norjan kruunu",
+    "NZD": "Uuden-Seelannin dollari",
+    "PHP": "Filippiinien peso",
+    "PLN": "Puolan złoty",
+    "RON": "Romanian leu",
+    "SEK": "Ruotsin kruunu",
+    "SGD": "Singaporen dollari",
+    "THB": "Thaimaan baht",
+    "TRY": "Turkin liira",
+    "USD": "Yhdysvaltain dollari",
+    "ZAR": "Etelä-Afrikan randi"
+  },
+  "launcher": {
+    "command_description": "Nopea valuuttamuunnos (esim. >fx 100 USD EUR)",
+    "convert_example": "Muunna {amount} {from} valuuttaan {to}",
+    "convert_to_default": "Muunna {amount} {from} valuuttaan {to} (oletus)",
+    "currency_not_found": "Valuuttakoodia ei löydy valuuttakursseista",
+    "error_retry": "Tarkista internet-yhteytesi. Napsauta yrittääksesi uudelleen.",
+    "fetching": "Haetaan osoitteesta frankfurter.app",
+    "loading": "Ladataan valuuttakursseja...",
+    "rate_click_copy": "Kurssi: 1 {from} = {rate} {to} | Napsauta kopioidaksesi",
+    "reverse_rate": "Käänteinen kurssi | Napsauta kopioidaksesi",
+    "show_rate": "Näytä kurssi 1 {from} - {to}",
+    "try_valid_code": "Syötä kelvollinen valuuttakoodi (esim. USD, EUR, PLN)",
+    "unknown_currency": "Tuntematon valuutta: {currency}"
+  },
+  "panel": {
+    "close": "Sulje",
+    "copy_result": "Kopioi tulos",
+    "error": "Kursseja ei voitu ladata",
+    "loading": "Ladataan kursseja...",
+    "rate_format": "1 {from} = {rate} {to}",
+    "refresh": "Päivitä kurssit",
+    "settings": "Asetukset",
+    "swap": "Vaihda valuutat",
+    "title": "Valuuttamuunnin",
+    "updated": "Päivitetty {time}"
+  },
+  "plugin": {
+    "short_title": "FX",
+    "title": "Valuuttamuunnos"
+  },
+  "settings": {
+    "display_mode": "Näyttötila",
+    "display_mode_description": "Kuinka paljon tietoa näytetään widgetissä",
+    "display_modes": {
+      "compact": "Tiivis (kurssinumero)",
+      "full": "Täysi (1 USD = 0.85 EUR)",
+      "icon": "Vain kuvake"
+    },
+    "general": "Yleiset Asetukset",
+    "intervals": {
+      "15": "15 minuuttia",
+      "180": "3 tuntia",
+      "30": "30 minuuttia",
+      "360": "6 tuntia",
+      "60": "1 tunti",
+      "720": "12 tuntia"
+    },
+    "refresh_interval": "Päivitysväli",
+    "refresh_interval_description": "Kuinka usein valuuttakurssit päivitetään automaattisesti",
+    "source_currency": "Lähdevaluutta",
+    "source_currency_description": "Oletusvaluutta muunnettavaksi",
+    "target_currency": "Kohdevaluutta",
+    "target_currency_description": "Oletusvaluutta tulokselle",
+    "widget": "Widget-asetukset"
+  },
+  "widget": {
+    "click_to_open": "Napsauta avataksesi muuntimen",
+    "error": "Kursseja ei voitu ladata, tarkista internet-yhteytesi.",
+    "loading": "Ladataan valuuttakursseja...",
+    "rate_format": "1 {from} = {rate} {to}"
+  }
+}

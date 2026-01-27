@@ -1,0 +1,95 @@
+{
+  "currencies": {
+    "AUD": "Australský dolar",
+    "BRL": "Brazilský real",
+    "CAD": "Kanadský dolar",
+    "CHF": "Švýcarský frank",
+    "CNY": "Čínský jüan",
+    "CZK": "Česká koruna",
+    "DKK": "Dánská koruna",
+    "EUR": "Euro",
+    "GBP": "Britská libra",
+    "HKD": "Hongkongský dolar",
+    "HUF": "Maďarský forint",
+    "IDR": "Indonéská rupie",
+    "ILS": "Izraelský šekel",
+    "INR": "Indická rupie",
+    "ISK": "Islandská koruna",
+    "JPY": "Japonský jen",
+    "KRW": "Jihokorejský won",
+    "MXN": "Mexické peso",
+    "MYR": "Malajsijský ringgit",
+    "NOK": "Norská koruna",
+    "NZD": "Novozélandský dolar",
+    "PHP": "Filipínské peso",
+    "PLN": "Polský zlotý",
+    "RON": "Rumunský leu",
+    "SEK": "Švédská koruna",
+    "SGD": "Singapurský dolar",
+    "THB": "Thajský baht",
+    "TRY": "Turecká lira",
+    "USD": "Americký dolar",
+    "ZAR": "Jihoafrický rand"
+  },
+  "launcher": {
+    "command_description": "Rychlý převod měn (např. >fx 100 USD EUR)",
+    "convert_example": "Převést {amount} {from} na {to}",
+    "convert_to_default": "Převést {amount} {from} na {to} (výchozí)",
+    "currency_not_found": "Kód měny nenalezen v kurzech",
+    "error_retry": "Zkontroluj připojení k internetu. Klikni pro opakování.",
+    "fetching": "Načítání z frankfurter.app",
+    "loading": "Načítání kurzů...",
+    "rate_click_copy": "Kurz: 1 {from} = {rate} {to} | Klikni pro kopírování",
+    "reverse_rate": "Opačný kurz | Klikni pro kopírování",
+    "show_rate": "Zobrazit kurz 1 {from} na {to}",
+    "try_valid_code": "Zadej platný kód měny (např. USD, EUR, PLN)",
+    "unknown_currency": "Neznámá měna: {currency}"
+  },
+  "panel": {
+    "close": "Zavřít",
+    "copy_result": "Kopírovat výsledek",
+    "error": "Nepodařilo se načíst kurzy",
+    "loading": "Načítání kurzů...",
+    "rate_format": "1 {from} = {rate} {to}",
+    "refresh": "Obnovit kurzy",
+    "settings": "Nastavení",
+    "swap": "Prohodit měny",
+    "title": "Převodník Měn",
+    "updated": "Aktualizováno {time}"
+  },
+  "plugin": {
+    "short_title": "FX",
+    "title": "Směna Měn"
+  },
+  "settings": {
+    "display_mode": "Režim Zobrazení",
+    "display_mode_description": "Kolik informací zobrazit ve widgetu",
+    "display_modes": {
+      "compact": "Kompaktní (číslo kurzu)",
+      "full": "Plný (1 USD = 0.85 EUR)",
+      "icon": "Pouze ikona"
+    },
+    "general": "Obecná Nastavení",
+    "intervals": {
+      "15": "15 minut",
+      "180": "3 hodiny",
+      "30": "30 minut",
+      "360": "6 hodin",
+      "60": "1 hodina",
+      "720": "12 hodin"
+    },
+    "refresh_interval": "Interval Aktualizace",
+    "refresh_interval_description": "Jak často automaticky aktualizovat kurzy",
+    "source_currency": "Zdrojová Měna",
+    "source_currency_description": "Výchozí měna pro převod",
+    "target_currency": "Cílová Měna",
+    "target_currency_description": "Výchozí měna výsledku",
+    "widget": "Nastavení Widgetu"
+  },
+  "widget": {
+    "click_to_open": "Klikni pro otevření převodníku",
+    "error": "Nepodařilo se načíst kurzy, zkontroluj připojení k internetu.",
+    "loading": "Načítání kurzů...",
+    "rate_format": "1 {from} = {rate} {to}"
+  }
+}

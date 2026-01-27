@@ -1,10 +1,9 @@
 {
   "id": "keybind-cheatsheet",
   "name": "Keybind Cheatsheet",
-  "version": "2.1.0",
+  "version": "2.1.2",
   "minNoctaliaVersion": "4.1.2",
   "author": "blacku",
-  "repository": "https://github.com/noctalia-dev/noctalia-plugins",
   "license": "MIT",
   "description": "Universal keyboard shortcuts cheatsheet that automatically detects and displays keybindings for Hyprland or Niri compositors.",
   "entryPoints": {

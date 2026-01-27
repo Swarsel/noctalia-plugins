@@ -1,0 +1,95 @@
+{
+  "currencies": {
+    "AUD": "Australsk dollar",
+    "BRL": "Brasiliansk real",
+    "CAD": "Canadisk dollar",
+    "CHF": "Schweizerfranc",
+    "CNY": "Kinesisk yuan",
+    "CZK": "Tjekkisk koruna",
+    "DKK": "Dansk krone",
+    "EUR": "Euro",
+    "GBP": "Britisk pund",
+    "HKD": "Hongkong-dollar",
+    "HUF": "Ungarsk forint",
+    "IDR": "Indonesisk rupiah",
+    "ILS": "Israelsk shekel",
+    "INR": "Indisk rupee",
+    "ISK": "Islandsk krone",
+    "JPY": "Japansk yen",
+    "KRW": "Sydkoreansk won",
+    "MXN": "Mexicansk peso",
+    "MYR": "Malaysisk ringgit",
+    "NOK": "Norsk krone",
+    "NZD": "Newzealandsk dollar",
+    "PHP": "Filippinsk peso",
+    "PLN": "Polsk złoty",
+    "RON": "Rumænsk leu",
+    "SEK": "Svensk krone",
+    "SGD": "Singaporeansk dollar",
+    "THB": "Thailandsk baht",
+    "TRY": "Tyrkisk lira",
+    "USD": "Amerikansk dollar",
+    "ZAR": "Sydafrikansk rand"
+  },
+  "launcher": {
+    "command_description": "Hurtig valutaomregning (f.eks. >fx 100 USD EUR)",
+    "convert_example": "Omregn {amount} {from} til {to}",
+    "convert_to_default": "Omregn {amount} {from} til {to} (standard)",
+    "currency_not_found": "Valutakode ikke fundet i vekslingskurserne",
+    "error_retry": "Tjek din internetforbindelse. Klik for at prøve igen.",
+    "fetching": "Henter fra frankfurter.app",
+    "loading": "Indlæser vekslingskurser...",
+    "rate_click_copy": "Kurs: 1 {from} = {rate} {to} | Klik for at kopiere",
+    "reverse_rate": "Omvendt kurs | Klik for at kopiere",
+    "show_rate": "Vis kurs for 1 {from} til {to}",
+    "try_valid_code": "Indtast en gyldig valutakode (f.eks. USD, EUR, PLN)",
+    "unknown_currency": "Ukendt valuta: {currency}"
+  },
+  "panel": {
+    "close": "Luk",
+    "copy_result": "Kopiér resultat",
+    "error": "Kunne ikke indlæse kurser",
+    "loading": "Indlæser kurser...",
+    "rate_format": "1 {from} = {rate} {to}",
+    "refresh": "Opdater kurser",
+    "settings": "Indstillinger",
+    "swap": "Byt valutaer",
+    "title": "Valutaomregner",
+    "updated": "Opdateret {time}"
+  },
+  "plugin": {
+    "short_title": "FX",
+    "title": "Valutaveksling"
+  },
+  "settings": {
+    "display_mode": "Visningstilstand",
+    "display_mode_description": "Hvor meget information der vises i widgeten",
+    "display_modes": {
+      "compact": "Kompakt (kurstal)",
+      "full": "Fuld (1 USD = 0.85 EUR)",
+      "icon": "Kun ikon"
+    },
+    "general": "Generelle Indstillinger",
+    "intervals": {
+      "15": "15 minutter",
+      "180": "3 timer",
+      "30": "30 minutter",
+      "360": "6 timer",
+      "60": "1 time",
+      "720": "12 timer"
+    },
+    "refresh_interval": "Opdateringsinterval",
+    "refresh_interval_description": "Hvor ofte vekslingskurser opdateres automatisk",
+    "source_currency": "Kildevaluta",
+    "source_currency_description": "Standardvaluta at omregne fra",
+    "target_currency": "Målvaluta",
+    "target_currency_description": "Standardvaluta for resultatet",
+    "widget": "Widget-indstillinger"
+  },
+  "widget": {
+    "click_to_open": "Klik for at åbne omregneren",
+    "error": "Kunne ikke indlæse kurser, tjek din internetforbindelse.",
+    "loading": "Indlæser vekslingskurser...",
+    "rate_format": "1 {from} = {rate} {to}"
+  }
+}
