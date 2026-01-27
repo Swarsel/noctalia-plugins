@@ -18,8 +18,13 @@ Item {
   property string widgetId: ""
   property string section: ""
 
-  readonly property string barPosition: Settings.data.bar.position
+  // Bar positioning properties
+  readonly property string screenName: screen ? screen.name : ""
+  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
   readonly property bool isVertical: barPosition === "left" || barPosition === "right"
+  readonly property real barHeight: Style.getBarHeightForScreen(screenName)
+  readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
+  readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
 
   property bool micActive: false
   property bool camActive: false

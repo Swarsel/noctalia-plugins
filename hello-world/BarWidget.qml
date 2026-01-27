@@ -20,12 +20,15 @@ Item {
   readonly property color bgColor: pluginApi?.pluginSettings?.backgroundColor || pluginApi?.manifest?.metadata?.defaultSettings?.backgroundColor || "transparent"
 
   // Bar positioning properties
-  readonly property string barPosition: Settings.getBarPositionForScreen(screen.name)
-  readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
-  readonly property real barHeight: Style.getBarHeightForScreen(screen?.name)
+  readonly property string screenName: screen ? screen.name : ""
+  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
+  readonly property bool isVertical: barPosition === "left" || barPosition === "right"
+  readonly property real barHeight: Style.getBarHeightForScreen(screenName)
+  readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
+  readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
 
-  readonly property real contentWidth: barIsVertical ? root.barHeight : contentRow.implicitWidth + Style.marginL * 2
-  readonly property real contentHeight: root.barHeight
+  readonly property real contentWidth: isVertical ? root.barHeight : contentRow.implicitWidth + Style.marginL * 2
+  readonly property real contentHeight: root.capsuleHeight
 
   implicitWidth: contentWidth
   implicitHeight: contentHeight
@@ -37,7 +40,7 @@ Item {
     width: root.contentWidth
     height: root.contentHeight
     color: mouseArea.containsMouse ? Qt.lighter(root.bgColor, 1.1) : root.bgColor
-    radius: !barIsVertical ? Style.radiusM : width * 0.5
+    radius: !isVertical ? Style.radiusM : width * 0.5
 
     RowLayout {
       id: contentRow
@@ -50,7 +53,7 @@ Item {
       }
 
       NText {
-        visible: !barIsVertical
+        visible: !isVertical
         text: root.message
         color: Color.mOnPrimary
         pointSize: Style.barFontSize

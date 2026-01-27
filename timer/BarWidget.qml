@@ -21,15 +21,20 @@ Item {
   readonly property var mainInstance: pluginApi?.mainInstance
   readonly property bool isActive: mainInstance && (mainInstance.timerRunning || mainInstance.timerElapsedSeconds > 0 || mainInstance.timerRemainingSeconds > 0)
 
-  readonly property string barPosition: Settings.data.bar.position || "top"
-  readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
+  // Bar positioning properties
+  readonly property string screenName: screen ? screen.name : ""
+  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
+  readonly property bool isVertical: barPosition === "left" || barPosition === "right"
+  readonly property real barHeight: Style.getBarHeightForScreen(screenName)
+  readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
+  readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
 
   readonly property real contentWidth: {
-    if (barIsVertical) return Style.capsuleHeight
+    if (isVertical) return Style.capsuleHeight
     if (isActive) return contentRow.implicitWidth + Style.marginM * 2
     return Style.capsuleHeight
   }
-  readonly property real contentHeight: Style.capsuleHeight
+  readonly property real contentHeight: root.capsuleHeight
 
   implicitWidth: contentWidth
   implicitHeight: contentHeight
@@ -83,7 +88,7 @@ Item {
       }
 
       NText {
-        visible: !barIsVertical && mainInstance && (mainInstance.timerRunning || mainInstance.timerElapsedSeconds > 0 || mainInstance.timerRemainingSeconds > 0)
+        visible: !isVertical && mainInstance && (mainInstance.timerRunning || mainInstance.timerElapsedSeconds > 0 || mainInstance.timerRemainingSeconds > 0)
         family: Settings.data.ui.fontFixed
         pointSize: Style.barFontSize
         text: {
