@@ -1,36 +1,18 @@
 # Keybind Cheatsheet for Noctalia
 
-Universal keyboard shortcuts cheatsheet plugin for Noctalia with **built-in editor**, **automatic compositor detection** (Hyprland/Niri), and **recursive config parsing**.
-
-![Preview](assets/preview.png)
+Universal keyboard shortcuts cheatsheet plugin for Noctalia that **automatically detects** your compositor (Hyprland or Niri) and displays your keybindings with **recursive config parsing**.
 
 ## Features
 
-### Cheatsheet View
 - **Automatic compositor detection** (Hyprland or Niri)
 - **Recursive config parsing** - follows all `source` (Hyprland) and `include` (Niri) directives
 - **Glob pattern support** - parses `~/.config/hypr/*.conf` style includes
+- **Configurable paths** - set custom config file locations in settings
 - **Smart key formatting** - XF86 keys display as readable names (Vol Up, Bright Down, etc.)
 - **Color-coded modifier keys** (Super, Ctrl, Shift, Alt)
 - **Flexible column layout** (1-4 columns)
 - **Auto-height** - adjusts to content automatically
 - **IPC support** - global hotkey toggle
-
-### Built-in Editor (v2.0)
-
-![Editor](assets/editor.png)
-
-- **Add/Edit/Delete keybinds** - full CRUD operations directly in the UI
-- **Add/Rename/Delete categories** - organize your keybinds (Hyprland only)
-- **Reorder keybinds** - move up/down within categories
-- **Move keybinds between categories** - drag to different category (Hyprland)
-- **Quick templates** - Noctalia IPC command template for easy plugin integration
-- **Live config reload** - changes are saved directly to your config files
-- **Flat view for Niri** - categories are auto-assigned based on action type
-
-![Edit Bind Dialog](assets/editkeybind.png)
-![Capture Bind Panel](assets/capture.png)
-![Manual Bind Config](assets/manual.png)
 
 ## Supported Compositors
 
@@ -48,22 +30,22 @@ cp -r keybind-cheatsheet ~/.config/noctalia/plugins/
 ## Usage
 
 ### Bar Widget
-
 Add the plugin to your bar configuration in Noctalia settings. Click the keyboard icon to open the cheatsheet.
 
 ### Global Hotkey
 
 #### Hyprland
-
+Add to your config:
 ```bash
-bind = $mod, F1, exec, qs -c noctalia-shell ipc call plugin:keybind-cheatsheet toggle
+bind = $mod, F1, exec, qs -c "noctalia-shell" ipc call "keybind-cheatsheet" "toggle"
 ```
+You can specify your custom Super key variable (e.g., $mainMod) in the plugin settings.
 
 #### Niri
-
+Add to your config:
 ```kdl
 binds {
-    Mod+F1 { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "plugin:keybind-cheatsheet" "toggle"; }
+    Mod+F1 { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "keybind-cheatsheet" "toggle"; }
 }
 ```
 
@@ -71,10 +53,9 @@ binds {
 
 ### Hyprland
 
-The plugin recursively parses your main config and all source includes.
+The plugin recursively parses your main config and all `source` includes.
 
 **Keybind format:**
-
 ```bash
 # 1. APPLICATIONS
 bind = $mod, T, exec, alacritty #"Terminal"
@@ -90,12 +71,11 @@ bind = $mod SHIFT, 1, movetoworkspace, 1 #"Move to workspace 1"
 ```
 
 **Requirements:**
-- **Categories:** `# N. CATEGORY NAME` (where N is a number)
-- **Descriptions:** `#"description"` at end of bind line
-- **Modifiers:** Your configured variable (default `$mod`, configurable in settings), `SHIFT`, `CTRL`, `ALT`
+- Categories: `# N. CATEGORY NAME` (where N is a number)
+- Descriptions: `#"description"` at end of bind line
+- Modifiers: `$mod`, `SHIFT`, `CTRL`, `ALT`
 
 **Source directives (automatically followed):**
-
 ```bash
 source = ~/.config/hypr/keybinds.conf
 source = ~/.config/hypr/apps/*.conf
@@ -103,10 +83,9 @@ source = ~/.config/hypr/apps/*.conf
 
 ### Niri
 
-The plugin parses the `binds { }` block and follows all include directives.
+The plugin parses the `binds { }` block and follows all `include` directives.
 
 **Keybind format:**
-
 ```kdl
 binds {
     // #"Applications"
@@ -124,12 +103,11 @@ binds {
 ```
 
 **Requirements:**
-- **Categories:** `// #"Category Name"` (must use this exact format)
-- **Descriptions:** `hotkey-overlay-title="description"` attribute
+- Categories: `// #"Category Name"` (must use this exact format)
+- Descriptions: `hotkey-overlay-title="description"` attribute
 - Without descriptions, actions are auto-categorized by type
 
 **Include directives (automatically followed):**
-
 ```kdl
 include "~/.config/niri/binds.kdl"
 ```
@@ -139,7 +117,7 @@ include "~/.config/niri/binds.kdl"
 When no category comment is provided, keybindings are grouped by action:
 
 | Action prefix | Category |
-|--------------|----------|
+|---------------|----------|
 | `spawn` | Applications |
 | `focus-column-*` | Column Navigation |
 | `focus-window-*` | Window Focus |
@@ -175,76 +153,30 @@ Access settings via the gear icon in the panel header:
 - **Height** - Auto or manual (300-2000px)
 - **Columns** - 1-4 columns
 - **Config paths** - Custom paths for Hyprland/Niri configs
-- **Mod Key Variable** - Customize the variable used for Super key (e.g. `$mod` or `$mainMod`)
 - **Refresh** - Force reload keybindings
-
-## Editor Usage
-
-1. Click **Edit** button in the top-right corner to enter edit mode
-2. Use **+ Add Category** to create new categories (Hyprland only)
-3. Use **+ Add Keybind** to add new keybinds
-4. Click the **edit** icon on any keybind to modify it
-5. Use **arrow buttons** to reorder keybinds within a category
-6. Click **Save** to write changes to your config file
-7. Click **Discard** to cancel all changes
-
-### Quick Templates
-
-When adding a new keybind, use the **Noctalia IPC** template to quickly insert a command for calling other Noctalia plugins:
-
-```bash
-exec, qs -c /path/to/noctalia ipc call
-```
 
 ## Troubleshooting
 
 ### "Loading..." stays forever
 
-- Check compositor is detected: look for logs with `[KeybindCheatsheet]`
-- Verify config file exists at the configured path
-- Ensure keybinds have proper format with descriptions
+1. Check compositor is detected: look for logs with `[KeybindCheatsheet]`
+2. Verify config file exists at the configured path
+3. Ensure keybinds have proper format with descriptions
 
 ### No categories found
 
-- **Hyprland:** Categories must start with `# 1.`, `# 2.`, etc.
-- **Niri:** Use `// #"Category Name"` format for custom categories
+**Hyprland:** Categories must start with `# 1.`, `# 2.`, etc.
 
-### Keybinds parsing issues
-
-If your keybinds are not showing up, check if you are using a custom variable for the Super key (e.g. `$mainMod`). Go to settings and update the **Mod Key Variable** field.
+**Niri:** Use `// #"Category Name"` format for custom categories.
 
 ### Keybinds from included files not showing
 
 The plugin follows `source` (Hyprland) and `include` (Niri) directives automatically. Check logs to see which files are being parsed.
 
-### Editor save failed
-
-- Ensure you have write permissions to your config file
-- Check if the config file path is correct in settings
-- For Niri: the compositor will validate and reload the config automatically
-
 ## Requirements
 
-- Noctalia Shell 3.6.0+
+- Noctalia Shell 4.1.0+
 - Hyprland or Niri compositor
-
-## Changelog
-
-### v2.0.0
-- Added built-in keybind editor
-- Add/Edit/Delete keybinds and categories
-- Reorder keybinds within categories
-- Move keybinds between categories (Hyprland)
-- Quick templates for Noctalia IPC
-- Flat view for Niri (auto-categorization)
-- Full i18n support (13 languages)
-
-### v1.0.0
-- Initial release
-- Cheatsheet view with recursive config parsing
-- Auto-detection of Hyprland/Niri
-- Color-coded modifier keys
-- Flexible column layout
 
 ## License
 
