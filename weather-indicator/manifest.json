@@ -6,7 +6,7 @@
   "author": "Sovereign",
   "license": "MIT",
   "repository": "https://github.com/noctalia-dev/noctalia-plugins",
-  "description": "Shows the current weather condition and tempurature.",
+  "description": "Shows the current weather condition and temperature.",
   "tags": ["Bar"],
   "entryPoints": {
     "barWidget": "BarWidget.qml",
