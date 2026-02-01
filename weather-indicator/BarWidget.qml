@@ -86,7 +86,7 @@ Item {
               var suffix = "°F";
             }
             temp = Math.round(temp);
-            if (!root.showTempUnit) {
+            if (!root.showTempUnit || isVertical) {
               suffix = "";
             }
             return `${temp}${suffix}`;
@@ -116,7 +116,22 @@ MouseArea {
     }
 }
 
+function buildCurrentTemp() {
+    let rows = [];
+    var temp = LocationService.data.weather.current_weather.temperature;
+    var suffix = "°C";
+
+    if (Settings.data.location.useFahrenheit) {
+        temp = LocationService.celsiusToFahrenheit(temp)
+        suffix = "°F";
+    }
+
+    rows.push([("Current"), `${Math.round(temp)}${suffix}`]);
+    return rows;
+}
+
 function buildHiLowTemps() {
+    let rows = [];
     var max = LocationService.data.weather.daily.temperature_2m_max[0]
     var min = LocationService.data.weather.daily.temperature_2m_min[0]
     var suffix = "°C";
@@ -127,14 +142,14 @@ function buildHiLowTemps() {
         suffix = "°F";
     }
 
-    max = Math.round(max)
-    min = Math.round(min)
+    rows.push([("High"), `${Math.round(max)}${suffix}`]);
+    rows.push([("Low"), `${Math.round(min)}${suffix}`]);
 
-    var tooltip = `High of ${max}${suffix}\nLow of ${min}${suffix}`
-    return tooltip;
+    return rows;
 }
 
 function buildSunriseSunset() {
+    let rows = [];
     var riseDate = new Date(LocationService.data.weather.daily.sunrise[0])
     var setDate  = new Date(LocationService.data.weather.daily.sunset[0])
 
@@ -142,30 +157,30 @@ function buildSunriseSunset() {
     var rise = riseDate.toLocaleTimeString(undefined, options);
     var set  = setDate.toLocaleTimeString(undefined, options);
 
-    var tooltip = `Sunrise: ${rise}\nSunset : ${set}`
-    return tooltip;
+    rows.push([("Sunrise"), rise]);
+    rows.push([("Sunset"), set]);
+    return rows;
 }
 
 function buildTooltip() {
     switch (tooltipOption) {
         case 1: {
-            var tooltip = buildHiLowTemps()
-            TooltipService.show(root, tooltip, BarService.getTooltipDirection())
+            TooltipService.show(root, buildHiLowTemps(), BarService.getTooltipDirection())
             break
         }
 
         case 2:
             var tooltip = buildSunriseSunset()
-
             TooltipService.show(root, tooltip, BarService.getTooltipDirection())
             break
 
         case 3:
+            var tooltip = buildCurrentTemp()
             var tooltip1 = buildHiLowTemps()
             var tooltip2 = buildSunriseSunset()
-            var finaltooltip = `${tooltip1}\n${tooltip2}`
+            const combined = [...tooltip,...tooltip1, ...tooltip2];
 
-            TooltipService.show(root, finaltooltip, BarService.getTooltipDirection())
+            TooltipService.show(root, combined, BarService.getTooltipDirection())
             break
 
         default:
