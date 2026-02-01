@@ -65,6 +65,9 @@ Item {
     }
 
     onCurrentWallpaperChanged: {
+        if (!root.active)
+            return;
+
         if (root.currentWallpaper != "") {
             Logger.d("mpvpaper", "Changing current wallpaper:", root.currentWallpaper);
 
@@ -88,7 +91,7 @@ Item {
     }
 
     onActiveChanged: {
-        if(root.active && !mpvProc.running) {
+        if(root.active && !mpvProc.running && root.currentWallpaper != "") {
             Logger.d("mpvpaper", "Turning mpvpaper on.");
 
             mpvProc.command = ["sh", "-c", `mpvpaper -o "input-ipc-server=${root.mpvSocket} loop no-audio" ALL ${root.currentWallpaper}` ]
