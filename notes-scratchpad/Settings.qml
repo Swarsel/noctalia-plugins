@@ -15,18 +15,9 @@ ColumnLayout {
 
   spacing: Style.marginM
 
-  NText {
-    text: pluginApi?.tr("settings.panel_dimensions.title") || "Panel Dimensions"
-    pointSize: Style.fontSizeL
-    font.weight: Font.Bold
-  }
-
-  NText {
-    text: pluginApi?.tr("settings.panel_dimensions.description") || "Configure the size of the scratchpad panel when it opens."
-    pointSize: Style.fontSizeS
-    color: Color.mOnSurfaceVariant
-    wrapMode: Text.WordWrap
-    Layout.fillWidth: true
+  NLabel {
+    label: pluginApi?.tr("settings.panel_dimensions.title") || "Panel Dimensions"
+    description: pluginApi?.tr("settings.panel_dimensions.description") || "Configure the size of the scratchpad panel when it opens."
   }
 
   RowLayout {
@@ -112,18 +103,9 @@ ColumnLayout {
     spacing: Style.marginS
     Layout.topMargin: Style.marginL
 
-    NText {
-      text: pluginApi?.tr("settings.keyboard_shortcut.title") || "Keyboard Shortcut"
-      pointSize: Style.fontSizeL
-      font.weight: Font.Bold
-    }
-
-    NText {
-      text: pluginApi?.tr("settings.keyboard_shortcut.description") || "Toggle the scratchpad panel with this command:"
-      pointSize: Style.fontSizeS
-      color: Color.mOnSurfaceVariant
-      wrapMode: Text.WordWrap
-      Layout.fillWidth: true
+    NLabel {
+      label: pluginApi?.tr("settings.keyboard_shortcut.title") || "Keyboard Shortcut"
+      description: pluginApi?.tr("settings.keyboard_shortcut.description") || "Toggle the scratchpad panel with this command:"
     }
 
     Rectangle {
@@ -137,8 +119,8 @@ ColumnLayout {
         anchors.fill: parent
         anchors.margins: Style.marginM
         text: "qs -c noctalia-shell ipc call plugin togglePanel notes-scratchpad"
-        font.pixelSize: Style.fontSizeS
-        font.family: "monospace"
+        font.pointSize: Style.fontSizeS
+        font.family: Settings.data.ui.fontFixed
         color: Color.mPrimary
         wrapMode: TextEdit.WrapAnywhere
         readOnly: true
