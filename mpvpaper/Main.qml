@@ -30,8 +30,7 @@ Item {
         "/tmp/mpv-socket"
 
     // Thumbnail variables
-    readonly property string thumbCacheFolder: ImageCacheService.wpThumbDir + "mpvpaper"
-    property bool creatingThumb: false
+    property bool thumbCacheReady: false
     property int _thumbGenIndex: 0
 
     function random() {
@@ -41,7 +40,7 @@ Item {
         }
 
         const rand = Math.floor(Math.random() * folderModel.count);
-        const url = folderModel.get(rand, "fileUrl");
+        const url = folderModel.get(rand, "filePath");
         setWallpaper(url);
     }
 
@@ -69,45 +68,51 @@ Item {
         pluginApi.saveSettings();
     }
 
-    // Get thumbnail url based on video name
-    function getThumbUrl(videoPath: string): string {
-        const file = videoPath.split('/').pop();
-        const extension = file.split('.').pop();
-        const filename = file.replace('.' + extension, "");
-
-        return `file://${thumbCacheFolder}/${filename}.bmp`;
+    function thumbRegenerate() {
+        root.thumbCacheReady = false;
+        thumbProc.command = ["sh", "-c", `rm -rf ${thumbCacheFolder} && mkdir -p ${thumbCacheFolder}`]
+        thumbProc.running = true;
     }
 
     function thumbGeneration() {
-        root.creatingThumb = true;
-
         while(root._thumbGenIndex < folderModel.count) {
             const videoUrl = folderModel.get(root._thumbGenIndex, "fileUrl");
             const thumbUrl = root.getThumbUrl(videoUrl);
             root._thumbGenIndex++;
-
             // Check if file already exists, otherwise create it with ffmpeg
             if (thumbFolderModel.indexOf(thumbUrl) === -1) {
                 Logger.d("mpvpaper", `Creating thumbnail for video: ${videoUrl}`);
 
-                thumbProc.command = ["sh", "-c", `ffmpeg -y -i ${videoUrl} -frames:v 1 ${thumbUrl}`]
+                thumbProc.command = ["sh", "-c", `ffmpeg -y -i ${videoUrl} -vf "scale=1080:-1" -vframes:v 1 ${thumbUrl}`]
                 thumbProc.running = true;
                 return;
             }
         }
 
         // The thumbnail generation has looped over every video and finished the generation.
-        root.creatingThumb = false;
         root._thumbGenIndex = 0;
+        root.thumbCacheReady = true;
+    }
+
+    /* HELPER FUNCTIONALITY */
+    readonly property string thumbCacheFolder: ImageCacheService.wpThumbDir + "mpvpaper"
+
+    function getThumbPath(videoPath: string): string {
+        const file = videoPath.split('/').pop();
+
+        return `${thumbCacheFolder}/${file}.bmp`
+    }
+
+    // Get thumbnail url based on video name
+    function getThumbUrl(videoPath: string): string {
+        return `file://${getThumbPath(videoPath)}`;
     }
 
     onWallpapersFolderChanged: {
         // Reset variables
         root._thumbGenIndex = 0;
-
-        // Clear and create the directory for the thumbnails
-        thumbProc.command = ["sh", "-c", `rm -rf ${thumbCacheFolder} && mkdir -p ${thumbCacheFolder}`]
-        thumbProc.running = true;
+        
+        root.thumbRegenerate();
     }
 
     onCurrentWallpaperChanged: {
