@@ -136,10 +136,9 @@ Item {
 
                     NGridView {
                         id: gridView
-                        anchors {
-                            fill: parent
-                            margins: Style.marginM
-                        }
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.margins: Style.marginXXS
 
                         property int columns: Math.max(1, Math.floor(availableWidth / 300));
                         property int itemSize: Math.floor(availableWidth / columns)
@@ -148,7 +147,7 @@ Item {
                         // For now all wallpapers are shown in a 16:9 ratio
                         cellHeight: Math.floor(itemSize * (9/16))
 
-                        model: root.thumbCacheReady ? wallpapersFolderModel : 0
+                        model: wallpapersFolderModel.status == FolderListModel.Ready && root.thumbCacheReady ? wallpapersFolderModel : 0
 
                         // Wallpaper
                         delegate: Item {
