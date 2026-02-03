@@ -2,7 +2,11 @@
   "barWidget": {
     "contextMenu": {
       "toggle": "Toggle",
-      "panel": "Panel"
+      "panel": "Panel",
+      "play": "Play",
+      "pause": "Pause",
+      "mute": "Mute",
+      "unmute": "Unmute"
     }
   },
   "panel": {

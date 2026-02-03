@@ -2,6 +2,13 @@
 
 Here I'll try to document all changes for the mpvpaper plugin.
 
+## 1.4.0 - 2026-02-03
+
+- feat: Added the ability to manipulate both audio and play/pause.
+- feat: Added so that a user can use both the video and the picture default wallpaper.
+- fix: Fixed a bug where the thumbnail folder wasn't created correctly on startup.
+- fix: Fixed other minor bugs.
+
 ## 1.3.0 - 2026-02-02
 
 - feat: Added color generation by utilizing the thumbnails.

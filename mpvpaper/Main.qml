@@ -15,6 +15,14 @@ Item {
         pluginApi.pluginSettings.active || 
         false
 
+    readonly property bool isPlaying:
+        pluginApi.pluginSettings.isPlaying ||
+        false
+
+    readonly property bool isMuted:
+        pluginApi.pluginSettings.isMuted ||
+        false
+
     readonly property string wallpapersFolder: 
         pluginApi.pluginSettings.wallpapersFolder || 
         pluginApi.manifest.metadata.defaultSettings.wallpapersFolder || 
@@ -29,10 +37,18 @@ Item {
         pluginApi.manifest.metadata.defaultSettings.mpvSocket || 
         "/tmp/mpv-socket"
 
+    readonly property var oldWallpapers:
+        pluginApi.pluginSettings.oldWallpapers || 
+        ({})
+
     // Thumbnail variables
     property bool thumbCacheReady: false
     property int _thumbGenIndex: 0
 
+
+    /***************************
+    * WALLPAPER FUNCTIONALITY
+    ***************************/
     function random() {
         if (wallpapersFolder === "" || folderModel.count === 0) {
             Logger.e("mpvpaper", "Empty wallpapers folder or no files found!");
@@ -68,6 +84,58 @@ Item {
         pluginApi.saveSettings();
     }
 
+    /***************************
+    * PLAYBACK FUNCTIONALITY
+    ***************************/
+    function resume() {
+        if (pluginApi == null) return;
+
+        pluginApi.pluginSettings.isPlaying = true;
+        pluginApi.saveSettings();
+    }
+
+    function pause() {
+        if (pluginApi == null) return;
+
+        pluginApi.pluginSettings.isPlaying = false;
+        pluginApi.saveSettings();
+    }
+
+    function togglePlaying() {
+        if (pluginApi == null) return;
+
+        pluginApi.pluginSettings.isPlaying = !root.isPlaying;
+        pluginApi.saveSettings();
+    }
+
+    /***************************
+    * AUDIO FUNCTIONALITY
+    ***************************/
+    function mute() {
+        if (pluginApi == null) return;
+
+        pluginApi.pluginSettings.isMuted = true;
+        pluginApi.saveSettings();
+    }
+
+    function unmute() {
+        if (pluginApi == null) return;
+
+        pluginApi.pluginSettings.isMuted = false;
+        pluginApi.saveSettings();
+    }
+
+    function toggleMute() {
+        if (pluginApi == null) return;
+
+        pluginApi.pluginSettings.isMuted = !root.isMuted;
+        pluginApi.saveSettings();
+    }
+
+
+    /***************************
+    * THUMBNAIL FUNCTIONALITY
+    ***************************/
     function thumbRegenerate() {
         root.thumbCacheReady = false;
         thumbProc.command = ["sh", "-c", `rm -rf ${thumbCacheFolder} && mkdir -p ${thumbCacheFolder}`]
@@ -83,7 +151,9 @@ Item {
             if (thumbFolderModel.indexOf(thumbUrl) === -1) {
                 Logger.d("mpvpaper", `Creating thumbnail for video: ${videoUrl}`);
 
-                thumbProc.command = ["sh", "-c", `ffmpeg -y -i ${videoUrl} -vf "scale=1080:-1" -vframes:v 1 ${thumbUrl}`]
+                // With scale
+                //thumbProc.command = ["sh", "-c", `ffmpeg -y -i ${videoUrl} -vf "scale=1080:-1" -vframes:v 1 ${thumbUrl}`]
+                thumbProc.command = ["sh", "-c", `ffmpeg -y -i ${videoUrl} -vframes:v 1 ${thumbUrl}`]
                 thumbProc.running = true;
                 return;
             }
@@ -94,7 +164,36 @@ Item {
         root.thumbCacheReady = true;
     }
 
-    /* HELPER FUNCTIONALITY */
+    /***************************
+    * WALLPAPER SERVICE
+    ***************************/
+    function saveOldWallpapers() {
+        Logger.d("mpvpaper", "Saving old wallpapers.");
+
+        let wallpapers = {};
+        const oldWallpapers = WallpaperService.currentWallpapers;
+        for(let screenName in oldWallpapers) {
+            // Only save the old wallpapers if it isn't the current video wallpaper.
+            if(oldWallpapers[screenName] != getThumbPath(root.currentWallpaper)) {
+                wallpapers[screenName] = oldWallpapers[screenName];
+            }
+        }
+
+        pluginApi.pluginSettings.oldWallpapers = wallpapers;
+        pluginApi.saveSettings();
+    }
+
+    function applyOldWallpapers() {
+        Logger.d("mpvpaper", "Applying the old wallpapers.");
+
+        for (let screenName in oldWallpapers) {
+            WallpaperService.changeWallpaper(oldWallpapers[screenName], screenName);
+        }
+    }
+
+    /***************************
+    * HELPER FUNCTIONALITY
+    ***************************/
     readonly property string thumbCacheFolder: ImageCacheService.wpThumbDir + "mpvpaper"
 
     function getThumbPath(videoPath: string): string {
@@ -108,6 +207,67 @@ Item {
         return `file://${getThumbPath(videoPath)}`;
     }
 
+    function activateMpvpaper() {
+        Logger.d("mpvpaper", "Activating mpvpaper...");
+
+        // Save the old wallpapers of the user.
+        saveOldWallpapers();
+
+        mpvProc.command = ["sh", "-c", `mpvpaper -o "input-ipc-server=${root.mpvSocket} loop ${isMuted ? "no-audio" : ""}" ALL ${root.currentWallpaper}` ]
+        mpvProc.running = true;
+
+        pluginApi.pluginSettings.isPlaying = true;
+        pluginApi.saveSettings();
+    }
+
+    function deactivateMpvpaper() {
+        Logger.d("mpvpaper", "Deactivating mpvpaper...");
+
+        // Apply the old wallpapers back
+        applyOldWallpapers();
+
+        socket.connected = false;
+        mpvProc.running = false;
+    }
+
+    function sendCommandToMPV(command: string) {
+        socket.connected = true;
+        socket.path = mpvSocket;
+        socket.write(`${command}\n`);
+        socket.flush();
+    }
+
+    /***************************
+    * EVENTS
+    ***************************/
+    onIsPlayingChanged: {
+        if (!mpvProc.running) {
+            Logger.d("mpvpaper", "No wallpaper is running!");
+            return;
+        }
+
+        // Pause or unpause the video
+        if(isPlaying) {
+            sendCommandToMPV("set pause no");
+        } else {
+            sendCommandToMPV("set pause yes");
+        }
+    }
+
+    onIsMutedChanged: {
+        if (!mpvProc.running) {
+            Logger.d("mpvpaper", "No wallpaper is running!");
+            return;
+        }
+
+        // This sets the audio id to null or to auto
+        if (isMuted) {
+            sendCommandToMPV("no-osd set aid no");
+        } else {
+            sendCommandToMPV("no-osd set aid auto");
+        }
+    }
+
     onCurrentWallpaperChanged: {
         if (!root.active)
             return;
@@ -117,22 +277,17 @@ Item {
 
             if(mpvProc.running) {
                 // If mpvpaper is already running
-                socket.connected = true;
-                socket.path = mpvSocket;
-                socket.write(`loadfile "${root.currentWallpaper}"\n`);
-                socket.flush();
+                sendCommandToMPV(`loadfile "${root.currentWallpaper}"`);
             } else {
                 // Start mpvpaper
-                mpvProc.command = ["sh", "-c", `mpvpaper -o "input-ipc-server=${root.mpvSocket} loop no-audio" ALL ${root.currentWallpaper}` ]
-                mpvProc.running = true;
+                activateMpvpaper();
             }
 
             thumbColorGenTimer.start();
         } else if(mpvProc.running) {
             Logger.d("mpvpaper", "Current wallpaper is empty, turning mpvpaper off.");
 
-            socket.connected = false;
-            mpvProc.running = false;
+            deactivateMpvpaper();
         }
     }
 
@@ -140,15 +295,18 @@ Item {
         if(root.active && !mpvProc.running && root.currentWallpaper != "") {
             Logger.d("mpvpaper", "Turning mpvpaper on.");
 
-            mpvProc.command = ["sh", "-c", `mpvpaper -o "input-ipc-server=${root.mpvSocket} loop no-audio" ALL ${root.currentWallpaper}` ]
-            mpvProc.running = true;
+            activateMpvpaper();
+            thumbColorGenTimer.start();
         } else if(!root.active) {
             Logger.d("mpvpaper", "Turning mpvpaper off.");
 
-            mpvProc.running = false;
+            deactivateMpvpaper();
         }
     }
 
+    /***************************
+    * COMPONENTS
+    ***************************/
     FolderListModel {
         id: folderModel
         folder: "file://" + root.wallpapersFolder
@@ -198,8 +356,11 @@ Item {
                     } else {
                         // Try to create the thumbnail again
                         // just a fail safe if the current wallpaper isn't included in the wallpapers folder
+                        const videoUrl = folderModel.get(root._thumbGenIndex, "fileUrl");
+                        const thumbUrl = root.getThumbUrl(videoUrl);
+
                         Logger.d("mpvpaper", "Thumbnail not found:", thumbPath);
-                        thumbColorGenTimerProc.command = ["sh", "-c", `ffmpeg -y -i ${videoUrl} -vf "scale=1080:-1" -vframes:v 1 ${thumbUrl}`]
+                        thumbColorGenTimerProc.command = ["sh", "-c", `ffmpeg -y -i ${videoUrl} -vframes:v 1 ${thumbUrl}`]
                         thumbColorGenTimerProc.running = true;
                     }
                 });
@@ -223,6 +384,13 @@ Item {
             // Try to create the thumbnails if they don't exist.
             root.thumbGeneration();
         }
+    }
+
+    // Process to create the thumbnail folder
+    Process {
+        id: thumbInit
+        command: ["sh", "-c", `mkdir -p ${root.thumbCacheFolder}`]
+        running: true
     }
 
     // IPC Handler
@@ -255,6 +423,30 @@ Item {
 
         function toggleActive() {
             root.setActive(!root.active);
+        }
+
+        function resume() {
+            root.resume();
+        }
+
+        function pause() {
+            root.pause();
+        }
+
+        function togglePlaying() {
+            root.togglePlaying();
+        }
+
+        function mute() {
+            root.mute();
+        }
+
+        function unmute() {
+            root.unmute();
+        }
+
+        function toggleMute() {
+            root.toggleMute();
         }
     }
 }

@@ -10,9 +10,17 @@ NIconButton {
 
     property var pluginApi: null
     property ShellScreen screen
-    
+
     readonly property bool active: 
         pluginApi.pluginSettings.active || 
+        false
+
+    readonly property bool isPlaying:
+        pluginApi.pluginSettings.isPlaying ||
+        false
+
+    readonly property bool isMuted:
+        pluginApi.pluginSettings.isMuted ||
         false
 
     icon: "wallpaper-selector"
@@ -24,20 +32,34 @@ NIconButton {
     onRightClicked: {
         PanelService.showContextMenu(contextMenu, root, screen);
     }
-    
+
     NPopupContextMenu {
         id: contextMenu
 
         model: [
             {
-                "label": pluginApi?.tr("barWidget.contextMenu.panel") || "Panel",
+                "label": root.pluginApi?.tr("barWidget.contextMenu.panel") || "Panel",
                 "action": "panel",
                 "icon": "rectangle"
             },
             {
-                "label": pluginApi?.tr("barWidget.contextMenu.toggle") || "Toggle",
+                "label": root.pluginApi?.tr("barWidget.contextMenu.toggle") || "Toggle",
                 "action": "toggle",
                 "icon": "power"
+            },
+            {
+                "label": root.isPlaying ? 
+                    root.pluginApi?.tr("barWidget.contextMenu.pause") || "Pause" : 
+                    root.pluginApi?.tr("barWidget.contextMenu.play") || "Play",
+                "action": root.isPlaying ? "pause" : "play",
+                "icon": root.isPlaying ? "media-pause" : "media-play"
+            },
+            {
+                "label": root.isMuted ? 
+                    root.pluginApi?.tr("barWidget.contextMenu.unmute") || "Unmute" : 
+                    root.pluginApi?.tr("barWidget.contextMenu.mute") || "Mute",
+                "action": root.isMuted ? "unmute" : "mute",
+                "icon": root.isMuted ? "volume-high" : "volume-mute"
             }
         ]
 
@@ -45,11 +67,32 @@ NIconButton {
             contextMenu.close();
             PanelService.closeContextMenu(root.screen);
 
-            if(action === "panel") {
-                pluginApi?.openPanel(root.screen, root);
-            } else if (action === "toggle") {
-                pluginApi.pluginSettings.active = !root.active;
-                pluginApi.saveSettings();
+            switch(action) {
+                case "panel":
+                    root.pluginApi?.openPanel(root.screen, root);
+                    break;
+                case "toggle":
+                    root.pluginApi.pluginSettings.active = !root.active;
+                    root.pluginApi.saveSettings();
+                    break;
+                case "play":
+                    root.pluginApi.pluginSettings.isPlaying = true;
+                    root.pluginApi.saveSettings();
+                    break;
+                case "pause":
+                    root.pluginApi.pluginSettings.isPlaying = false;
+                    root.pluginApi.saveSettings();
+                    break;
+                case "mute":
+                    root.pluginApi.pluginSettings.isMuted = true;
+                    root.pluginApi.saveSettings();
+                    break;
+                case "unmute":
+                    root.pluginApi.pluginSettings.isMuted = false;
+                    root.pluginApi.saveSettings();
+                    break;
+                default:
+                    Logger.e("mpvpaper", "Error, action not found:", action);
             }
         }
     }
