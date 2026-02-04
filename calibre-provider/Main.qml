@@ -13,11 +13,11 @@ Item {
         if (!launcherPanel)
           return;
         var searchText = launcherPanel.searchText || "";
-        var isInKaomojiMode = searchText.startsWith(">cb");
+        var isInCalibreMode = searchText.startsWith(">cb");
         if (!launcherPanel.isPanelOpen) {
           launcherPanel.open();
           launcherPanel.setSearchText(">cb ");
-        } else if (isInKaomojiMode) {
+        } else if (isInCalibreMode) {
           launcherPanel.close();
         } else {
           launcherPanel.setSearchText(">cb ");
