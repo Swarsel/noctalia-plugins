@@ -97,7 +97,7 @@ Item {
 
           NIcon {
             id: iconWidget
-            anchors.centerIn: parent
+            Layout.alignment: Qt.AlignVCenter
             icon: root.isGenerating ? "loader-2" : "sparkles"
             color: {
               if (root.isGenerating)
