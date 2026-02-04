@@ -23,6 +23,10 @@ Item {
         pluginApi.pluginSettings.isMuted ||
         false
 
+    readonly property real volume:
+        pluginApi.pluginSettings.volume ||
+        100
+
     readonly property string wallpapersFolder: 
         pluginApi.pluginSettings.wallpapersFolder || 
         pluginApi.manifest.metadata.defaultSettings.wallpapersFolder || 
@@ -84,6 +88,7 @@ Item {
         pluginApi.saveSettings();
     }
 
+
     /***************************
     * PLAYBACK FUNCTIONALITY
     ***************************/
@@ -108,6 +113,7 @@ Item {
         pluginApi.saveSettings();
     }
 
+
     /***************************
     * AUDIO FUNCTIONALITY
     ***************************/
@@ -130,6 +136,25 @@ Item {
 
         pluginApi.pluginSettings.isMuted = !root.isMuted;
         pluginApi.saveSettings();
+    }
+
+    function setVolume(volume) {
+        if (pluginApi == null) return;
+
+        pluginApi.pluginSettings.volume = volume;
+        pluginApi.saveSettings();
+    }
+
+    function increaseVolume() {
+        if (pluginApi == null) return;
+
+        setVolume(root.volume + Settings.data.audio.volumeStep);
+    }
+
+    function decreaseVolume() {
+        if (pluginApi == null) return;
+
+        setVolume(root.volume - Settings.data.audio.volumeStep);
     }
 
 
@@ -163,6 +188,7 @@ Item {
         root._thumbGenIndex = 0;
         root.thumbCacheReady = true;
     }
+
 
     /***************************
     * WALLPAPER SERVICE
@@ -200,6 +226,7 @@ Item {
             WallpaperService.changeWallpaper(WallpaperService.noctaliaDefaultWallpaper, undefined);
         }
     }
+
 
     /***************************
     * HELPER FUNCTIONALITY
@@ -247,6 +274,7 @@ Item {
         socket.flush();
     }
 
+
     /***************************
     * EVENTS
     ***************************/
@@ -275,6 +303,23 @@ Item {
             sendCommandToMPV("no-osd set aid no");
         } else {
             sendCommandToMPV("no-osd set aid auto");
+        }
+    }
+
+    onVolumeChanged: {
+        if(!mpvProc.running) {
+            return;
+        }
+
+        // Mpv has volume from 0 to 100 instead of 0 to 1
+        const v = Math.min(Math.max(volume, 0), 100);
+
+        sendCommandToMPV(`no-osd set volume ${v}`)
+
+        // Clamp the volume
+        if(v != volume) {
+            pluginApi.pluginSettings.volume = v;
+            pluginApi.saveSettings();
         }
     }
 
@@ -314,12 +359,13 @@ Item {
         }
     }
 
+
     /***************************
     * COMPONENTS
     ***************************/
     FolderListModel {
         id: folderModel
-        folder: "file://" + root.wallpapersFolder
+        folder: root.pluginApi == null ? "" : "file://" + root.wallpapersFolder
         nameFilters: ["*.mp4", "*.avi", "*.mov"]
         showDirs: false
 
@@ -457,6 +503,18 @@ Item {
 
         function toggleMute() {
             root.toggleMute();
+        }
+
+        function setVolume(volume: real) {
+            root.setVolume(volume);
+        }
+
+        function increaseVolume() {
+            root.increaseVolume();
+        }
+
+        function decreaseVolume() {
+            root.decreaseVolume();
         }
     }
 }

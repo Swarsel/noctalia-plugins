@@ -9,6 +9,8 @@ import qs.Commons
 import qs.Widgets
 import qs.Services.UI
 
+import "./common"
+
 Item {
     id: root
     
@@ -34,11 +36,6 @@ Item {
     readonly property string currentWallpaper: 
         pluginApi.pluginSettings.currentWallpaper || 
         ""
-
-    readonly property string mpvSocket: 
-        pluginApi.pluginSettings.mpvSocket || 
-        pluginApi.manifest.metadata.defaultSettings.mpvSocket || 
-        "/tmp/mpv-socket"
 
 
     anchors.fill: parent
@@ -78,10 +75,10 @@ Item {
             // Tool row
             RowLayout {
                 Layout.fillWidth: true
-
                 spacing: Style.marginM
 
                 NButton {
+                    icon: "wallpaper-selector"
                     text: pluginApi?.tr("panel.buttons.folder.text") || "Folder"
                     tooltipText: pluginApi?.tr("panel.buttons.folder.tooltip") || "Choose another folder that contains your wallpapers."
 
@@ -89,24 +86,11 @@ Item {
                 }
 
                 NButton {
+                    icon: "refresh"
                     text: pluginApi?.tr("panel.buttons.refresh.text") || "Refresh"
                     tooltipText: pluginApi?.tr("panel.buttons.refresh.tooltip") || "Refresh thumbnails, remove old ones and create new ones."
 
                     onClicked: pluginApi?.mainInstance.thumbRegenerate();
-                }
-
-                NButton {
-                    text: pluginApi?.tr("panel.buttons.random.text") || "Random"
-                    tooltipText: pluginApi?.tr("panel.buttons.random.tooltip") || "Choose a random image from this folder."
-
-                    onClicked: pluginApi?.mainInstance.random();
-                }
-
-                NButton {
-                    text: pluginApi?.tr("panel.buttons.clear.text") || "Clear"
-                    tooltipText: pluginApi?.tr("panel.buttons.clear.tooltip") || "Clear the current wallpaper image."
-
-                    onClicked: pluginApi?.mainInstance.clear();
                 }
             }
 
@@ -121,6 +105,7 @@ Item {
                 ColumnLayout {
                     anchors.fill: parent
                     visible: !root.thumbCacheReady
+                    spacing: Style.marginS
 
                     NText {
                         text: pluginApi?.tr("panel.loading") || "Loading..."
@@ -133,6 +118,7 @@ Item {
                 ColumnLayout {
                     anchors.fill: parent
                     visible: root.thumbCacheReady
+                    spacing: Style.marginS
 
                     NGridView {
                         id: gridView
@@ -167,7 +153,7 @@ Item {
 
                                 radius: Style.iRadiusXS
 
-                                borderWidth: root.thumbCacheReady && currentWallpaper == wallpapersFolderModel.get(index, "filePath") ? Style.borderM : 0
+                                borderWidth: root.thumbCacheReady && root.currentWallpaper == wallpapersFolderModel.get(index, "filePath") ? Style.borderM : 0
                                 borderColor: Color.mPrimary;
 
                                 imagePath: root.thumbCacheReady ? pluginApi.mainInstance.getThumbUrl(wallpaper.path) : "";
@@ -199,11 +185,15 @@ Item {
 
                     FolderListModel {
                         id: wallpapersFolderModel
-                        folder: "file://" + root.wallpapersFolder
+                        folder: root.pluginApi == null ? "" : "file://" + root.wallpapersFolder
                         nameFilters: ["*.mp4", "*.avi", "*.mov"]
                         showDirs: false
                     }
                 }
+            }
+
+            ToolRow {
+                pluginApi: root.pluginApi
             }
         }
     }

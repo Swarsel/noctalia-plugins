@@ -1,6 +1,6 @@
 # Mpvpaper
 
-A plugin that allows having video wallpapers.
+A plugin that allows having video wallpapers using mpvpaper.
 
 ![Preview](preview.png)
 

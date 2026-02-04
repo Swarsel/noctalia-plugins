@@ -43,12 +43,15 @@
       "icon_tooltip": "Select wallpapers folder",
       "file_picker_title": "Choose wallpapers folder"
     },
-    "current_wallpaper": {
-      "title_label": "Current Wallpaper",
-      "title_description": "The current wallpaper that is shown.",
-      "input_placeholder": "/path/to/wallpaper",
+    "select_wallpaper": {
+      "title_label": "Select Wallpaper",
+      "title_description": "Choose the current video wallpaper playing.",
       "icon_tooltip": "Select current wallpaper",
       "file_picker_title": "Choose current wallpaper"
+    },
+    "volume": {
+      "label": "Volume",
+      "description": "The volume of the video wallpaper playing."
     },
     "mpv_socket": {
       "title_label": "Mpvpaper socket",
@@ -56,8 +59,30 @@
       "input_placeholder": "Example: /tmp/mpv-socket"
     },
     "actions": {
-      "random": "Random",
-      "clear": "Clear"
+      "random": {
+        "text": "Random",
+        "tooltip": "Choose a random wallpaper from the wallpapers folder."
+      },
+      "clear": {
+        "text": "Clear",
+        "tooltip": "Clear the current wallpaper."
+      },
+      "pause": {
+        "text": "Pause",
+        "tooltip": "Pause the video wallpaper."
+      },
+      "resume": {
+        "text": "Resume",
+        "tooltip": "Resume the video wallpaper."
+      },
+      "mute": {
+        "text": "Mute",
+        "tooltip": "Mute the video wallpaper."
+      },
+      "unmute": {
+        "text": "Unmute",
+        "tooltip": "Unmute the video wallpaper."
+      }
     }
   }
 }

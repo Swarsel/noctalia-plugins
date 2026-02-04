@@ -2,6 +2,13 @@
 
 Here I'll try to document all changes for the mpvpaper plugin.
 
+## 1.5.0 - 2026-02-04
+
+- feat: Added the ability to control the volume of the video wallpaper, both with IPC and from the settings.
+- fix: Fixed the settings to make it more clear what is what.
+- fix: Added specific tool row for both the settings and the panel.
+- fix: Added some more comments and made the code more readable.
+
 ## 1.4.0 - 2026-02-03
 
 - feat: Added the ability to manipulate both audio and play/pause.
