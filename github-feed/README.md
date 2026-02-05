@@ -14,6 +14,9 @@ Display GitHub activity from users you follow and activity on your own repositor
 - Stars - when someone stars your repo
 - Forks - when someone forks your repo
 
+**GitHub Notifications:**
+- Overview over notifications you receive
+
 **Technical:**
 - Parallel GraphQL fetching for 5-6x faster load times
 - Queries ALL followed users efficiently
@@ -25,6 +28,7 @@ Display GitHub activity from users you follow and activity on your own repositor
 ## Requirements
 
 - GitHub Personal Access Token with `read:user` scope
+  - If you want to use the notifications feature the token also needs `notifications` scope
 - Create one at: https://github.com/settings/tokens
 
 ## Configuration
@@ -121,6 +125,13 @@ github-feed/
 ```
 
 ## Version History
+
+### 1.2.0
+- Added GitHub Notifications support
+  - Displays unread notification count in bar tooltip
+  - Lists detailed notifications in the feed in a separate tab
+  - Split view into "Activity" and "Notifications" tabs
+  - Added settings toggle to set the default tab
 
 ### 1.1.0
 - Parallel GraphQL fetching (6 concurrent requests)

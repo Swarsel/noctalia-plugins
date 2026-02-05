@@ -28,6 +28,8 @@ Item {
     readonly property bool hasUsername: (pluginApi?.pluginSettings?.username || "") !== ""
     readonly property string username: pluginApi?.pluginSettings?.username || ""
 
+    property int currentTab: pluginApi?.pluginSettings?.defaultTab ?? 0
+
     function formatEventType(event) {
         if (!event || !event.type) return ""
 
@@ -97,6 +99,20 @@ Item {
         return "https://github.com/" + repo
     }
 
+    function getNotificationIcon(type) {
+        switch (type) {
+            case "Issue": return "circle-dot"
+            case "PullRequest": return "git-pull-request"
+            case "Release": return "tag"
+            case "Discussion": return "messages"
+            case "CheckSuite": return "circle-check"
+            case "Commit": return "git-commit"
+            case "WorkflowRun": return "player-play"
+            case "RepositoryInvitation": return "user-plus"
+            default: return "bell"
+        }
+    }
+
     Rectangle {
         id: panelContainer
         anchors.fill: parent
@@ -121,7 +137,10 @@ Item {
 
                 NText {
                     Layout.fillWidth: true
-                    text: "GitHub Activity"
+                    text: {
+                        var count = root.mainInstance?.notificationCount || 0
+                        return count > 0 ? "GitHub Activity (" + count + ")" : "GitHub Activity"
+                    }
                     pointSize: Style.fontSizeM
                     font.weight: Font.Bold
                     color: Color.mOnSurface
@@ -136,6 +155,58 @@ Item {
                         if (root.mainInstance) {
                             root.mainInstance.fetchFromGitHub()
                         }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Style.marginS
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: activityBtn.implicitHeight
+                    color: root.currentTab === 0 ? Color.mPrimary : Color.mSurfaceVariant
+                    radius: Style.radiusM
+
+                    NText {
+                        id: activityBtn
+                        anchors.centerIn: parent
+                        text: "Activity"
+                        color: root.currentTab === 0 ? Color.mOnPrimary : Color.mOnSurfaceVariant
+                        pointSize: Style.fontSizeS
+                        font.weight: Font.Medium
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.currentTab = 0
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: notifBtn.implicitHeight
+                    color: root.currentTab === 1 ? Color.mPrimary : Color.mSurfaceVariant
+                    radius: Style.radiusM
+
+                    NText {
+                        id: notifBtn
+                        anchors.centerIn: parent
+                        text: {
+                            var count = root.mainInstance?.notificationCount || 0
+                            return count > 0 ? "Notifications (" + count + ")" : "Notifications"
+                        }
+                        color: root.currentTab === 1 ? Color.mOnPrimary : Color.mOnSurfaceVariant
+                        pointSize: Style.fontSizeS
+                        font.weight: Font.Medium
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.currentTab = 1
                     }
                 }
             }
@@ -218,11 +289,14 @@ Item {
                 ColumnLayout {
                     anchors.centerIn: parent
                     spacing: Style.marginL
-                    visible: !root.isLoading && !root.hasError && root.events.length === 0 && root.hasUsername
+                    visible: !root.isLoading && !root.hasError && root.hasUsername && (
+                        (root.currentTab === 0 && root.events.length === 0) ||
+                        (root.currentTab === 1 && (!mainInstance?.notificationsList || mainInstance.notificationsList.length === 0))
+                    )
 
                     NText {
                         Layout.alignment: Qt.AlignHCenter
-                        text: "No recent activity"
+                        text: root.currentTab === 0 ? "No recent activity" : "No notifications"
                         pointSize: Style.fontSizeM
                         color: Color.mOnSurfaceVariant
                     }
@@ -231,108 +305,211 @@ Item {
                 NScrollView {
                     anchors.fill: parent
                     anchors.margins: Style.marginS
-                    visible: root.events.length > 0 && !root.hasError
+                    visible: root.hasUsername && !root.hasError && (
+                        (root.currentTab === 0 && root.events.length > 0) ||
+                        (root.currentTab === 1 && mainInstance?.notificationsList && mainInstance.notificationsList.length > 0)
+                    )
 
-                    ListView {
-                        id: eventsList
-                        model: root.events
-                        spacing: Style.marginS
-                        clip: true
+                    ColumnLayout {
+                        width: parent.width
+                        spacing: 0
 
-                        delegate: Rectangle {
-                            id: eventCard
-                            width: ListView.view.width
-                            height: cardContent.implicitHeight + Style.marginM * 2
-                            color: cardMouse.containsMouse ? Qt.lighter(Color.mSurface, 1.05) : Color.mSurface
-                            radius: Style.radiusM
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: Style.marginS
+                            visible: root.currentTab === 0
 
-                            Behavior on color {
-                                ColorAnimation { duration: 100 }
-                            }
+                        Repeater {
+                            model: root.events
+                            delegate: Rectangle {
+                                id: eventCard
+                                Layout.fillWidth: true
+                                height: cardContent.implicitHeight + Style.marginM * 2
+                                color: cardMouse.containsMouse ? Qt.lighter(Color.mSurface, 1.05) : Color.mSurface
+                                radius: Style.radiusM
 
-                            property var event: modelData
-                            property string eventDetail: getEventDetail(event)
-
-                            RowLayout {
-                                id: cardContent
-                                anchors {
-                                    left: parent.left
-                                    right: parent.right
-                                    verticalCenter: parent.verticalCenter
-                                    margins: Style.marginM
-                                }
-                                spacing: Style.marginM
-
-                                NImageRounded {
-                                    Layout.preferredWidth: 36
-                                    Layout.preferredHeight: 36
-                                    Layout.alignment: Qt.AlignTop
-                                    radius: 18
-                                    imagePath: root.mainInstance ? root.mainInstance.getAvatarPath(eventCard.event?.actor?.login) : ""
-                                    fallbackIcon: "user"
+                                Behavior on color {
+                                    ColorAnimation { duration: 100 }
                                 }
 
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 2
+                                property var event: modelData
+                                property string eventDetail: getEventDetail(event)
 
-                                    RowLayout {
+                                RowLayout {
+                                    id: cardContent
+                                    anchors {
+                                        left: parent.left
+                                        right: parent.right
+                                        verticalCenter: parent.verticalCenter
+                                        margins: Style.marginM
+                                    }
+                                    spacing: Style.marginM
+
+                                    NImageRounded {
+                                        Layout.preferredWidth: 36
+                                        Layout.preferredHeight: 36
+                                        Layout.alignment: Qt.AlignTop
+                                        radius: 18
+                                        imagePath: root.mainInstance ? root.mainInstance.getAvatarPath(eventCard.event?.actor?.login) : ""
+                                        fallbackIcon: "user"
+                                    }
+
+                                    ColumnLayout {
                                         Layout.fillWidth: true
-                                        spacing: 4
+                                        spacing: 2
 
-                                        NText {
-                                            text: eventCard.event?.actor?.login || ""
-                                            pointSize: Style.fontSizeS
-                                            font.weight: Font.Bold
-                                            color: Color.mOnSurface
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 4
+
+                                            NText {
+                                                text: eventCard.event?.actor?.login || ""
+                                                pointSize: Style.fontSizeS
+                                                font.weight: Font.Bold
+                                                color: Color.mOnSurface
+                                            }
+
+                                            NText {
+                                                text: formatEventType(eventCard.event)
+                                                pointSize: Style.fontSizeS
+                                                color: Color.mOnSurfaceVariant
+                                            }
+
+                                            Item { Layout.fillWidth: true }
+
+                                            NText {
+                                                text: formatRelativeTime(eventCard.event?.created_at)
+                                                pointSize: Style.fontSizeXS
+                                                color: Color.mOnSurfaceVariant
+                                            }
                                         }
 
                                         NText {
-                                            text: formatEventType(eventCard.event)
+                                            Layout.fillWidth: true
+                                            text: formatRepoName(eventCard.event?.repo)
                                             pointSize: Style.fontSizeS
-                                            color: Color.mOnSurfaceVariant
+                                            font.weight: Font.Medium
+                                            color: Color.mPrimary
+                                            elide: Text.ElideRight
                                         }
 
-                                        Item { Layout.fillWidth: true }
-
                                         NText {
-                                            text: formatRelativeTime(eventCard.event?.created_at)
+                                            Layout.fillWidth: true
+                                            visible: eventCard.eventDetail !== ""
+                                            text: eventCard.eventDetail
                                             pointSize: Style.fontSizeXS
                                             color: Color.mOnSurfaceVariant
+                                            elide: Text.ElideRight
+                                            maximumLineCount: 1
                                         }
                                     }
+                                }
 
-                                    NText {
-                                        Layout.fillWidth: true
-                                        text: formatRepoName(eventCard.event?.repo)
-                                        pointSize: Style.fontSizeS
-                                        font.weight: Font.Medium
-                                        color: Color.mPrimary
-                                        elide: Text.ElideRight
-                                    }
+                                MouseArea {
+                                    id: cardMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
 
-                                    NText {
-                                        Layout.fillWidth: true
-                                        visible: eventCard.eventDetail !== ""
-                                        text: eventCard.eventDetail
-                                        pointSize: Style.fontSizeXS
-                                        color: Color.mOnSurfaceVariant
-                                        elide: Text.ElideRight
-                                        maximumLineCount: 1
+                                    onClicked: {
+                                        var url = getEventUrl(eventCard.event)
+                                        if (url) {
+                                            Qt.openUrlExternally(url)
+                                        }
                                     }
                                 }
                             }
+                        }
+                    }
 
-                            MouseArea {
-                                id: cardMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: Style.marginS
+                        visible: root.currentTab === 1
 
-                                onClicked: {
-                                    var url = getEventUrl(eventCard.event)
-                                    if (url) {
-                                        Qt.openUrlExternally(url)
+                        Repeater {
+                            model: mainInstance?.notificationsList || []
+                            delegate: Rectangle {
+                                id: notifCard
+                                Layout.fillWidth: true
+                                height: notifContent.implicitHeight + Style.marginM * 2
+                                color: notifMouse.containsMouse ? Qt.lighter(Color.mSurface, 1.05) : Color.mSurface
+                                radius: Style.radiusM
+
+                                Behavior on color {
+                                    ColorAnimation { duration: 100 }
+                                }
+
+                                property var notification: modelData
+
+                                RowLayout {
+                                    id: notifContent
+                                    anchors {
+                                        left: parent.left
+                                        right: parent.right
+                                        verticalCenter: parent.verticalCenter
+                                        margins: Style.marginM
+                                    }
+                                    spacing: Style.marginM
+
+                                    NIcon {
+                                        icon: root.getNotificationIcon(notifCard.notification.type)
+                                        pointSize: Style.fontSizeL
+                                        color: Color.mPrimary
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 2
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 4
+
+                                            NText {
+                                                text: notifCard.notification.repo
+                                                pointSize: Style.fontSizeS
+                                                font.weight: Font.Bold
+                                                color: Color.mOnSurface
+                                            }
+
+                                            NText {
+                                                text: "• " + notifCard.notification.type
+                                                pointSize: Style.fontSizeXS
+                                                color: Color.mOnSurfaceVariant
+                                            }
+
+                                            Item { Layout.fillWidth: true }
+
+                                            NText {
+                                                text: formatRelativeTime(notifCard.notification.updated_at)
+                                                pointSize: Style.fontSizeXS
+                                                color: Color.mOnSurfaceVariant
+                                            }
+                                        }
+
+                                        NText {
+                                            Layout.fillWidth: true
+                                            text: notifCard.notification.title
+                                            pointSize: Style.fontSizeS
+                                            color: Color.mOnSurface
+                                            elide: Text.ElideRight
+                                            maximumLineCount: 2
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: notifMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+
+                                    onClicked: {
+                                        var url = notifCard.notification.url
+                                        if (url) {
+                                            Qt.openUrlExternally(url)
+                                        }
                                     }
                                 }
                             }
@@ -342,8 +519,9 @@ Item {
             }
         }
     }
+}
 
     Component.onCompleted: {
-        Logger.i("GitHubFeed", "Panel initialized")
+        Logger.i("GitHubFeed", "Panel initialized, currentTab: " + root.currentTab)
     }
 }

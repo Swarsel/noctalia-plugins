@@ -43,6 +43,7 @@ Item {
     readonly property bool showRepoCreations: pluginApi?.pluginSettings?.showRepoCreations ?? true
     readonly property bool showMyRepoStars: pluginApi?.pluginSettings?.showMyRepoStars ?? true
     readonly property bool showMyRepoForks: pluginApi?.pluginSettings?.showMyRepoForks ?? true
+    readonly property int defaultTab: pluginApi?.pluginSettings?.defaultTab ?? 0
 
     readonly property string cacheDir: pluginApi?.pluginDir ? pluginApi.pluginDir + "/cache" : ""
     readonly property string eventsCachePath: cacheDir + "/events.json"
@@ -50,6 +51,56 @@ Item {
 
     property var collectedEvents: []
     property var availableAvatars: ({})
+
+    readonly property var urlResolvers: ({
+        "PullRequest": function(url, repo, title) {
+            if (!url) return "https://github.com/" + repo;
+            return url.replace("https://api.github.com/repos/", "https://github.com/")
+                      .replace(/\/pulls\/(\d+)$/, "/pull/$1");
+        },
+        "Issue": function(url, repo, title) {
+            if (!url) return "https://github.com/" + repo;
+            return url.replace("https://api.github.com/repos/", "https://github.com/")
+                      .replace(/\/issues\/(\d+)$/, "/issues/$1");
+        },
+        "Release": function(url, repo, title) {
+            return "https://github.com/" + repo + "/releases/tag/" + encodeURIComponent(title);
+        },
+        "Discussion": function(url, repo, title) {
+            return "https://github.com/" + repo + "/discussions";
+        },
+        "Default": function(url, repo, title) {
+            if (!url) return "https://github.com/" + repo;
+            return url.replace("https://api.github.com/repos/", "https://github.com/");
+        }
+    })
+
+    Component {
+        id: notificationProcessComponent
+        Process {
+            property string targetUrl: ""
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    if (this.text.trim() === "default") {
+                        Qt.openUrlExternally(targetUrl)
+                    }
+                }
+            }
+            onExited: this.destroy()
+        }
+    }
+
+    function sendSystemNotification(title, message, url) {
+        if (!root.enableSystemNotifications) return
+
+        var cmd = ["notify-send", "-a", "GitHub Feed", "--action=default=Open", "--wait", title, message]
+        var process = notificationProcessComponent.createObject(root, {
+            "command": cmd,
+            "targetUrl": url || "https://github.com"
+        })
+        process.running = true
+        logDebug("Sending system notification: " + title + " - " + message + " (URL: " + url + ")")
+    }
 
     property var userBatches: []
     property var batchQueue: []
@@ -131,6 +182,7 @@ Item {
             if (age < root.refreshInterval) {
                 root.rawEvents = cached.events
                 Logger.i("GitHubFeed", "Using cached data (" + cached.events.length + " events), age: " + Math.floor(age / 60) + " min")
+                fetchNotifications()
             } else {
                 Logger.i("GitHubFeed", "Cache expired, fetching fresh data")
                 if (root.username && root.token) fetchFromGitHub()
@@ -141,6 +193,21 @@ Item {
         }
     }
 
+<<<<<<< HEAD
+=======
+    function populateSeenIdsFromCache() {
+        const sync = (target, source) => {
+            if (target.length === 0) {
+                return source.map(item => item.id);
+            }
+            return target;
+        };
+        root.seenEventIds = sync(root.seenEventIds, root.rawEvents);
+        root.seenNotificationIds = sync(root.seenNotificationIds, root.notificationsList);
+    }
+
+
+>>>>>>> 5ee4524 (notif)
     function saveToCache() {
         if (!root.cacheDir) return
 
@@ -667,6 +734,83 @@ Item {
 
         followingProcess.page = 1
         followingProcess.running = true
+        fetchNotifications()
+    }
+
+    property int notificationCount: 0
+    property var notificationsList: []
+
+    Process {
+        id: notificationsProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                handleNotificationsResponse(this.text)
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+               if (this.text.trim().length > 0) Logger.w("GitHubFeed", "Notifications stderr: " + this.text)
+            }
+        }
+        onExited: function(exitCode, exitStatus) {
+            if (exitCode !== 0) {
+               Logger.e("GitHubFeed", "Notifications process exited with code " + exitCode)
+            }
+        }
+    }
+
+    function fetchNotifications() {
+        if (!root.username || !root.token) return
+
+        Logger.i("GitHubFeed", "Fetching notifications...")
+        notificationsProcess.command = [
+            "curl", "-s", "--max-time", "10",
+            "-H", "Authorization: Bearer " + root.token,
+            "-H", "Accept: application/vnd.github.v3+json",
+            "https://api.github.com/notifications"
+        ]
+        notificationsProcess.running = true
+    }
+
+    function handleNotificationsResponse(response) {
+        try {
+            if (!response || response.trim() === "") {
+                return
+            }
+
+            var data = JSON.parse(response)
+            if (Array.isArray(data)) {
+                root.notificationCount = data.length
+
+                var list = []
+                data.forEach(function(n) {
+                    var type = n.subject ? n.subject.type : "Notification"
+                    var title = n.subject ? n.subject.title : ""
+                    var repo = n.repository ? n.repository.full_name : ""
+                    var url = ""
+
+                    var resolver = root.urlResolvers[type] || root.urlResolvers["Default"];
+                    url = resolver(n.subject ? n.subject.url : null, repo, title);
+
+                    list.push({
+                        id: n.id,
+                        title: title,
+                        type: type,
+                        repo: repo,
+                        updated_at: n.updated_at,
+                        url: url,
+                        unread: n.unread
+                    })
+                })
+                root.notificationsList = list
+
+                Logger.i("GitHubFeed", "Fetched " + data.length + " notifications")
+            } else {
+                Logger.e("GitHubFeed", "Failed to parse notifications: not an array. Response: " + response.substring(0, 100))
+            }
+        } catch (e) {
+            Logger.e("GitHubFeed", "Error parsing notifications: " + e)
+        }
     }
 
     function finalizeFetch() {
