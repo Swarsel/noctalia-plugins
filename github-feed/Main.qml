@@ -43,6 +43,7 @@ Item {
     readonly property bool showRepoCreations: pluginApi?.pluginSettings?.showRepoCreations ?? true
     readonly property bool showMyRepoStars: pluginApi?.pluginSettings?.showMyRepoStars ?? true
     readonly property bool showMyRepoForks: pluginApi?.pluginSettings?.showMyRepoForks ?? true
+    readonly property int defaultTab: pluginApi?.pluginSettings?.defaultTab ?? 0
 
     readonly property string cacheDir: pluginApi?.pluginDir ? pluginApi.pluginDir + "/cache" : ""
     readonly property string eventsCachePath: cacheDir + "/events.json"
@@ -131,6 +132,7 @@ Item {
             if (age < root.refreshInterval) {
                 root.rawEvents = cached.events
                 Logger.i("GitHubFeed", "Using cached data (" + cached.events.length + " events), age: " + Math.floor(age / 60) + " min")
+                fetchNotifications()
             } else {
                 Logger.i("GitHubFeed", "Cache expired, fetching fresh data")
                 if (root.username && root.token) fetchFromGitHub()
@@ -667,6 +669,92 @@ Item {
 
         followingProcess.page = 1
         followingProcess.running = true
+        fetchNotifications()
+    }
+
+    property int notificationCount: 0
+    property var notificationsList: []
+
+    Process {
+        id: notificationsProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                handleNotificationsResponse(this.text)
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+               if (this.text.trim().length > 0) Logger.w("GitHubFeed", "Notifications stderr: " + this.text)
+            }
+        }
+        onExited: function(exitCode, exitStatus) {
+            if (exitCode !== 0) {
+               Logger.e("GitHubFeed", "Notifications process exited with code " + exitCode)
+            }
+        }
+    }
+
+    function fetchNotifications() {
+        if (!root.username || !root.token) return
+
+        Logger.i("GitHubFeed", "Fetching notifications...")
+        notificationsProcess.command = [
+            "curl", "-s", "--max-time", "10",
+            "-H", "Authorization: Bearer " + root.token,
+            "-H", "Accept: application/vnd.github.v3+json",
+            "https://api.github.com/notifications"
+        ]
+        notificationsProcess.running = true
+    }
+
+    function handleNotificationsResponse(response) {
+        try {
+            if (!response || response.trim() === "") {
+                return
+            }
+
+            var data = JSON.parse(response)
+            if (Array.isArray(data)) {
+                root.notificationCount = data.length
+
+                var list = []
+                data.forEach(function(n) {
+                    var type = n.subject ? n.subject.type : "Notification"
+                    var title = n.subject ? n.subject.title : ""
+                    var repo = n.repository ? n.repository.full_name : ""
+                    var url = ""
+
+                    if (n.subject && n.subject.url) {
+                        if (type === "Release") {
+                            url = "https://github.com/" + repo + "/releases/tag/" + encodeURIComponent(title)
+                        } else {
+                            url = n.subject.url
+                                .replace("https://api.github.com/repos/", "https://github.com/")
+                                .replace(/\/pulls\/(\d+)$/, "/pull/$1")
+                        }
+                    } else if (n.repository && n.repository.html_url) {
+                        url = n.repository.html_url
+                    }
+
+                    list.push({
+                        id: n.id,
+                        title: title,
+                        type: type,
+                        repo: repo,
+                        updated_at: n.updated_at,
+                        url: url,
+                        unread: n.unread
+                    })
+                })
+                root.notificationsList = list
+
+                Logger.i("GitHubFeed", "Fetched " + data.length + " notifications")
+            } else {
+                Logger.e("GitHubFeed", "Failed to parse notifications: not an array. Response: " + response.substring(0, 100))
+            }
+        } catch (e) {
+            Logger.e("GitHubFeed", "Error parsing notifications: " + e)
+        }
     }
 
     function finalizeFetch() {

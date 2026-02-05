@@ -19,6 +19,7 @@ ColumnLayout {
     property bool editShowRepoCreations: true
     property bool editShowMyRepoStars: true
     property bool editShowMyRepoForks: true
+    property int editDefaultTab: 0
     property bool editOpenInBrowser: true
 
     spacing: Style.marginM
@@ -111,6 +112,7 @@ ColumnLayout {
         Layout.bottomMargin: Style.marginS
     }
 
+
     NLabel {
         label: "Activity from Followed Users"
         description: "Events from people you follow"
@@ -199,6 +201,18 @@ ColumnLayout {
         label: "Behavior"
     }
 
+    NComboBox {
+        Layout.fillWidth: true
+        label: "Default Tab"
+        description: "Choose which tab to show when opening the panel"
+        model: [
+            { key: "0", name: "Activity" },
+            { key: "1", name: "Notifications" }
+        ]
+        currentKey: root.editDefaultTab.toString()
+        onSelected: key => root.editDefaultTab = parseInt(key)
+    }
+
     NToggle {
         Layout.fillWidth: true
         label: "Open in Browser"
@@ -280,6 +294,7 @@ ColumnLayout {
         pluginApi.pluginSettings.showRepoCreations = root.editShowRepoCreations
         pluginApi.pluginSettings.showMyRepoStars = root.editShowMyRepoStars
         pluginApi.pluginSettings.showMyRepoForks = root.editShowMyRepoForks
+        pluginApi.pluginSettings.defaultTab = root.editDefaultTab
         pluginApi.pluginSettings.openInBrowser = root.editOpenInBrowser
 
         pluginApi.saveSettings()
@@ -304,6 +319,7 @@ ColumnLayout {
         root.editShowRepoCreations = settings?.showRepoCreations ?? defaults?.showRepoCreations ?? true
         root.editShowMyRepoStars = settings?.showMyRepoStars ?? defaults?.showMyRepoStars ?? true
         root.editShowMyRepoForks = settings?.showMyRepoForks ?? defaults?.showMyRepoForks ?? true
+        root.editDefaultTab = settings?.defaultTab ?? defaults?.defaultTab ?? 0
         root.editOpenInBrowser = settings?.openInBrowser ?? defaults?.openInBrowser ?? true
     }
 }

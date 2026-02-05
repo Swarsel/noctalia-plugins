@@ -71,6 +71,12 @@ NIconButton {
 
         var username = pluginApi?.pluginSettings?.username || ""
         var tooltip = "GitHub Feed - @" + username + "\n"
+
+        var notifCount = mainInstance?.notificationCount || 0
+        if (notifCount > 0) {
+            tooltip += notifCount + (notifCount === 1 ? " unread notification\n" : " unread notifications\n")
+        }
+
         tooltip += events.length + " events"
 
         if (mainInstance?.lastFetchTimestamp) {
