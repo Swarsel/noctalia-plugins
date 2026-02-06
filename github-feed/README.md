@@ -133,6 +133,7 @@ github-feed/
   - Split view into "Activity" and "Notifications" tabs
   - Added settings toggle to set the default tab
   - Added optional customizable notifications badge to bar icon
+- Added optional system notifications for events and notifications
 
 ### 1.1.0
 - Parallel GraphQL fetching (6 concurrent requests)
