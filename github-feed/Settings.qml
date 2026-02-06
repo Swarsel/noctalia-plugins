@@ -19,6 +19,11 @@ ColumnLayout {
     property bool editShowRepoCreations: true
     property bool editShowMyRepoStars: true
     property bool editShowMyRepoForks: true
+    property bool editShowNotificationBadge: true
+    property bool editColorizationEnabled: false
+    property string editColorizationIcon: "Primary"
+    property string editColorizationBadge: "Primary"
+    property string editColorizationBadgeText: "Primary"
     property int editDefaultTab: 0
     property bool editOpenInBrowser: true
 
@@ -221,6 +226,70 @@ ColumnLayout {
         onToggled: (checked) => { root.editOpenInBrowser = checked }
     }
 
+    NToggle {
+        Layout.fillWidth: true
+        label: "Show Notification Badge"
+        description: "Show a count of unread notifications on the bar icon"
+        checked: root.editShowNotificationBadge
+        onToggled: (checked) => { root.editShowNotificationBadge = checked }
+    }
+
+    NToggle {
+        Layout.fillWidth: true
+        label: "Enable colorization"
+        description: "Enable colorization for the icon and badge, applying theme colors"
+        checked: root.editColorizationEnabled
+        onToggled: (checked) => { root.editColorizationEnabled = checked }
+    }
+
+    NComboBox {
+        Layout.fillWidth: true
+        visible: root.editColorizationEnabled
+        label: "Icon Color"
+        description: "Apply theme colors to the GitHub icon"
+        model: [
+            { key: "None", name: "None" },
+            { key: "Primary", name: "Primary" },
+            { key: "Secondary", name: "Secondary" },
+            { key: "Tertiary", name: "Tertiary" },
+            { key: "Error", name: "Error" }
+        ]
+        currentKey: root.editColorizationIcon
+        onSelected: key => root.editColorizationIcon = key
+    }
+
+    NComboBox {
+        Layout.fillWidth: true
+        visible: root.editColorizationEnabled
+        label: "Badge Color"
+        description: "Apply theme colors to the badge background"
+        model: [
+            { key: "None", name: "None" },
+            { key: "Primary", name: "Primary" },
+            { key: "Secondary", name: "Secondary" },
+            { key: "Tertiary", name: "Tertiary" },
+            { key: "Error", name: "Error" }
+        ]
+        currentKey: root.editColorizationBadge
+        onSelected: key => root.editColorizationBadge = key
+    }
+
+    NComboBox {
+        Layout.fillWidth: true
+        visible: root.editColorizationEnabled
+        label: "Badge Text Color"
+        description: "Apply theme colors to the badge text"
+        model: [
+            { key: "None", name: "None" },
+            { key: "Primary", name: "Primary" },
+            { key: "Secondary", name: "Secondary" },
+            { key: "Tertiary", name: "Tertiary" },
+            { key: "Error", name: "Error" }
+        ]
+        currentKey: root.editColorizationBadgeText
+        onSelected: key => root.editColorizationBadgeText = key
+    }
+
     NDivider {
         Layout.fillWidth: true
         Layout.topMargin: Style.marginS
@@ -294,6 +363,11 @@ ColumnLayout {
         pluginApi.pluginSettings.showRepoCreations = root.editShowRepoCreations
         pluginApi.pluginSettings.showMyRepoStars = root.editShowMyRepoStars
         pluginApi.pluginSettings.showMyRepoForks = root.editShowMyRepoForks
+        pluginApi.pluginSettings.showNotificationBadge = root.editShowNotificationBadge
+        pluginApi.pluginSettings.colorizationEnabled = root.editColorizationEnabled
+        pluginApi.pluginSettings.colorizationIcon = root.editColorizationIcon
+        pluginApi.pluginSettings.colorizationBadge = root.editColorizationBadge
+        pluginApi.pluginSettings.colorizationBadgeText = root.editColorizationBadgeText
         pluginApi.pluginSettings.defaultTab = root.editDefaultTab
         pluginApi.pluginSettings.openInBrowser = root.editOpenInBrowser
 
@@ -319,6 +393,11 @@ ColumnLayout {
         root.editShowRepoCreations = settings?.showRepoCreations ?? defaults?.showRepoCreations ?? true
         root.editShowMyRepoStars = settings?.showMyRepoStars ?? defaults?.showMyRepoStars ?? true
         root.editShowMyRepoForks = settings?.showMyRepoForks ?? defaults?.showMyRepoForks ?? true
+        root.editShowNotificationBadge = settings?.showNotificationBadge ?? defaults?.showNotificationBadge ?? true
+        root.editColorizationEnabled = settings?.colorizationEnabled ?? defaults?.colorizationEnabled ?? false
+        root.editColorizationIcon = settings?.colorizationIcon || defaults?.colorizationIcon || "Primary"
+        root.editColorizationBadge = settings?.colorizationBadge || defaults?.colorizationBadge || "Primary"
+        root.editColorizationBadgeText = settings?.colorizationBadgeText || defaults?.colorizationBadgeText || "Primary"
         root.editDefaultTab = settings?.defaultTab ?? defaults?.defaultTab ?? 0
         root.editOpenInBrowser = settings?.openInBrowser ?? defaults?.openInBrowser ?? true
     }

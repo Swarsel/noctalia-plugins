@@ -43,6 +43,11 @@ Item {
     readonly property bool showRepoCreations: pluginApi?.pluginSettings?.showRepoCreations ?? true
     readonly property bool showMyRepoStars: pluginApi?.pluginSettings?.showMyRepoStars ?? true
     readonly property bool showMyRepoForks: pluginApi?.pluginSettings?.showMyRepoForks ?? true
+    readonly property bool showNotificationBadge: pluginApi?.pluginSettings?.showNotificationBadge ?? true
+    readonly property bool colorizationEnabled: pluginApi?.pluginSettings?.colorizationEnabled ?? false
+    readonly property string colorizationIcon: pluginApi?.pluginSettings?.colorizationIcon ?? "Primary"
+    readonly property string colorizationBadge: pluginApi?.pluginSettings?.colorizationBadge ?? "Primary"
+    readonly property string colorizationBadgeText: pluginApi?.pluginSettings?.colorizationBadgeText ?? "Primary"
     readonly property int defaultTab: pluginApi?.pluginSettings?.defaultTab ?? 0
 
     readonly property string cacheDir: pluginApi?.pluginDir ? pluginApi.pluginDir + "/cache" : ""

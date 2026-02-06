@@ -137,10 +137,7 @@ Item {
 
                 NText {
                     Layout.fillWidth: true
-                    text: {
-                        var count = root.mainInstance?.notificationCount || 0
-                        return count > 0 ? "GitHub Activity (" + count + ")" : "GitHub Activity"
-                    }
+                    text: "GitHub Activity"
                     pointSize: Style.fontSizeM
                     font.weight: Font.Bold
                     color: Color.mOnSurface

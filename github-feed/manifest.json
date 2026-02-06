@@ -29,6 +29,11 @@
       "showRepoCreations": true,
       "showMyRepoStars": true,
       "showMyRepoForks": true,
+      "showNotificationBadge": true,
+      "colorizationEnabled": false,
+      "colorizationIcon": "Primary",
+      "colorizationBadge": "Primary",
+      "colorizationBadgeText": "Primary",
       "defaultTab": 0,
       "openInBrowser": true
     }

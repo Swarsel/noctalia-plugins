@@ -18,7 +18,32 @@ NIconButton {
     readonly property var events: mainInstance?.events || []
     readonly property bool isLoading: mainInstance?.isLoading || false
     readonly property bool hasError: mainInstance?.hasError || false
+    readonly property bool colorizationEnabled: mainInstance?.colorizationEnabled ?? false
+    readonly property string colorizationIcon: mainInstance?.colorizationIcon ?? "Primary"
+    readonly property string colorizationBadge: mainInstance?.colorizationBadge ?? "Primary"
+    readonly property string colorizationBadgeText: mainInstance?.colorizationBadgeText ?? "Primary"
+    readonly property bool showNotificationBadge: mainInstance?.showNotificationBadge ?? true
     readonly property bool hasUsername: (pluginApi?.pluginSettings?.username || "") !== ""
+
+    function getThemeColor(type) {
+        switch (type) {
+            case "Primary": return Color.mPrimary
+            case "Secondary": return Color.mSecondary
+            case "Tertiary": return Color.mTertiary
+            case "Error": return Color.mError
+            default: return Color.mOnSurface
+        }
+    }
+
+    function getOnThemeColor(type) {
+        switch (type) {
+            case "Primary": return Color.mOnPrimary
+            case "Secondary": return Color.mOnSecondary
+            case "Tertiary": return Color.mOnTertiary
+            case "Error": return Color.mOnError
+            default: return Color.mSurface
+        }
+    }
 
     icon: "brand-github"
     tooltipText: buildTooltip()
@@ -30,6 +55,7 @@ NIconButton {
     colorFg: {
         if (hasError) return Color.mError
         if (!hasUsername) return Color.mOnSurfaceVariant
+        if (colorizationEnabled && colorizationIcon !== "None") return getThemeColor(colorizationIcon)
         return Color.mOnSurface
     }
     colorBgHover: Color.mHover
@@ -39,6 +65,34 @@ NIconButton {
 
     border.color: Style.capsuleBorderColor
     border.width: Style.capsuleBorderWidth
+
+    Rectangle {
+        id: badge
+        visible: showNotificationBadge && (mainInstance?.notificationCount > 0)
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.rightMargin: 2
+        anchors.topMargin: 2
+        z: 2
+        height: 14 * Style.uiScaleRatio
+        width: Math.max(height, badgeText.implicitWidth + 6 * Style.uiScaleRatio)
+        radius: height / 2
+        color: (colorizationEnabled && colorizationBadge !== "None") ? getThemeColor(colorizationBadge) : Color.mError
+        border.color: Color.mSurface
+        border.width: 1
+
+        NText {
+            id: badgeText
+            anchors.centerIn: parent
+            text: {
+                var count = mainInstance?.notificationCount || 0
+                return count > 99 ? "99+" : count.toString()
+            }
+            pointSize: Style.fontSizeXS * 0.8
+            font.weight: Font.Bold
+            color: (colorizationEnabled && colorizationBadgeText !== "None") ? getThemeColor(colorizationBadgeText) : Color.mOnError
+        }
+    }
 
     onClicked: {
         if (!hasUsername) {

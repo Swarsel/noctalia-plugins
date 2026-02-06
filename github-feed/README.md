@@ -132,6 +132,7 @@ github-feed/
   - Lists detailed notifications in the feed in a separate tab
   - Split view into "Activity" and "Notifications" tabs
   - Added settings toggle to set the default tab
+  - Added optional customizable notifications badge to bar icon
 
 ### 1.1.0
 - Parallel GraphQL fetching (6 concurrent requests)
