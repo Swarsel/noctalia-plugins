@@ -26,6 +26,14 @@ ColumnLayout {
     property string editColorizationBadgeText: "Primary"
     property int editDefaultTab: 0
     property bool editOpenInBrowser: true
+    property bool editEnableSystemNotifications: false
+    property bool editNotifyGitHubNotifications: true
+    property bool editNotifyStars: true
+    property bool editNotifyForks: true
+    property bool editNotifyPRs: true
+    property bool editNotifyRepoCreations: true
+    property bool editNotifyMyRepoStars: true
+    property bool editNotifyMyRepoForks: true
 
     spacing: Style.marginM
 
@@ -296,6 +304,89 @@ ColumnLayout {
         Layout.bottomMargin: Style.marginS
     }
 
+    NLabel {
+        label: "System Notifications"
+        description: "Get notified when new events occur"
+    }
+
+    NToggle {
+        Layout.fillWidth: true
+        label: "Enable System Notifications"
+        description: "Send desktop notifications for new events"
+        checked: root.editEnableSystemNotifications
+        onToggled: (checked) => { root.editEnableSystemNotifications = checked }
+    }
+
+    GridLayout {
+        Layout.fillWidth: true
+        visible: root.editEnableSystemNotifications
+        columns: 2
+        columnSpacing: Style.marginM
+        rowSpacing: Style.marginS
+
+        NToggle {
+            Layout.fillWidth: true
+            label: "GitHub Notifications"
+            description: "New notifications in your inbox"
+            checked: root.editNotifyGitHubNotifications
+            onToggled: (checked) => { root.editNotifyGitHubNotifications = checked }
+        }
+
+        NToggle {
+            Layout.fillWidth: true
+            label: "Stars"
+            description: "When someone you follow stars a repo"
+            checked: root.editNotifyStars
+            onToggled: (checked) => { root.editNotifyStars = checked }
+        }
+
+        NToggle {
+            Layout.fillWidth: true
+            label: "Forks"
+            description: "When someone you follow forks a repo"
+            checked: root.editNotifyForks
+            onToggled: (checked) => { root.editNotifyForks = checked }
+        }
+
+        NToggle {
+            Layout.fillWidth: true
+            label: "Pull Requests"
+            description: "When someone you follow opens/merges a PR"
+            checked: root.editNotifyPRs
+            onToggled: (checked) => { root.editNotifyPRs = checked }
+        }
+
+        NToggle {
+            Layout.fillWidth: true
+            label: "Repo Creations"
+            description: "When someone you follow creates a repo"
+            checked: root.editNotifyRepoCreations
+            onToggled: (checked) => { root.editNotifyRepoCreations = checked }
+        }
+
+        NToggle {
+            Layout.fillWidth: true
+            label: "Stars (My Repos)"
+            description: "When someone stars one of your repos"
+            checked: root.editNotifyMyRepoStars
+            onToggled: (checked) => { root.editNotifyMyRepoStars = checked }
+        }
+
+        NToggle {
+            Layout.fillWidth: true
+            label: "Forks (My Repos)"
+            description: "When someone forks one of your repos"
+            checked: root.editNotifyMyRepoForks
+            onToggled: (checked) => { root.editNotifyMyRepoForks = checked }
+        }
+    }
+
+    NDivider {
+        Layout.fillWidth: true
+        Layout.topMargin: Style.marginS
+        Layout.bottomMargin: Style.marginS
+    }
+
     Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: infoCol.implicitHeight + Style.marginM * 2
@@ -370,6 +461,14 @@ ColumnLayout {
         pluginApi.pluginSettings.colorizationBadgeText = root.editColorizationBadgeText
         pluginApi.pluginSettings.defaultTab = root.editDefaultTab
         pluginApi.pluginSettings.openInBrowser = root.editOpenInBrowser
+        pluginApi.pluginSettings.enableSystemNotifications = root.editEnableSystemNotifications
+        pluginApi.pluginSettings.notifyGitHubNotifications = root.editNotifyGitHubNotifications
+        pluginApi.pluginSettings.notifyStars = root.editNotifyStars
+        pluginApi.pluginSettings.notifyForks = root.editNotifyForks
+        pluginApi.pluginSettings.notifyPRs = root.editNotifyPRs
+        pluginApi.pluginSettings.notifyRepoCreations = root.editNotifyRepoCreations
+        pluginApi.pluginSettings.notifyMyRepoStars = root.editNotifyMyRepoStars
+        pluginApi.pluginSettings.notifyMyRepoForks = root.editNotifyMyRepoForks
 
         pluginApi.saveSettings()
 
@@ -400,5 +499,13 @@ ColumnLayout {
         root.editColorizationBadgeText = settings?.colorizationBadgeText || defaults?.colorizationBadgeText || "Primary"
         root.editDefaultTab = settings?.defaultTab ?? defaults?.defaultTab ?? 0
         root.editOpenInBrowser = settings?.openInBrowser ?? defaults?.openInBrowser ?? true
+        root.editEnableSystemNotifications = settings?.enableSystemNotifications ?? defaults?.enableSystemNotifications ?? false
+        root.editNotifyGitHubNotifications = settings?.notifyGitHubNotifications ?? defaults?.notifyGitHubNotifications ?? true
+        root.editNotifyStars = settings?.notifyStars ?? defaults?.notifyStars ?? true
+        root.editNotifyForks = settings?.notifyForks ?? defaults?.notifyForks ?? true
+        root.editNotifyPRs = settings?.notifyPRs ?? defaults?.notifyPRs ?? true
+        root.editNotifyRepoCreations = settings?.notifyRepoCreations ?? defaults?.notifyRepoCreations ?? true
+        root.editNotifyMyRepoStars = settings?.notifyMyRepoStars ?? defaults?.notifyMyRepoStars ?? true
+        root.editNotifyMyRepoForks = settings?.notifyMyRepoForks ?? defaults?.notifyMyRepoForks ?? true
     }
 }
