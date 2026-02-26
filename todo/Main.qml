@@ -4,9 +4,28 @@ import qs.Commons
 import qs.Services.UI
 
 Item {
+  id: mainRoot
+
   property var pluginApi: null
   property var rawTodos: []
   property var rawPages: []
+
+  // CalDAV sync integration
+  readonly property bool caldavEnabled: pluginApi?.pluginSettings?.caldavEnabled ?? false
+
+  CalDavSync {
+    id: caldavSync
+    pluginApi: mainRoot.pluginApi
+    mainInstance: mainRoot
+
+    onSyncCompleted: function(remoteTodos) {
+      _mergeRemoteTodos(remoteTodos);
+    }
+
+    onSyncError: function(message) {
+      Logger.e("Todo", "CalDAV sync error: " + message);
+    }
+  }
 
   // ============================================
   // Initialization
@@ -61,9 +80,16 @@ Item {
         }
         if (rawTodos[i].details === undefined)
           rawTodos[i].details = "";
+        if (rawTodos[i].uid === undefined)
+          rawTodos[i].uid = caldavSync.generateUid();
       }
 
       pluginApi.saveSettings();
+
+      // Trigger initial CalDAV sync if enabled
+      if (caldavEnabled) {
+        caldavSync.syncAll();
+      }
     }
   }
 
@@ -263,6 +289,7 @@ Item {
   function createTodo(text, priority, pageId) {
     var newTodo = {
       id: Date.now(),
+      uid: caldavSync.generateUid(),
       text: text,
       completed: false,
       createdAt: new Date().toISOString(),
@@ -280,6 +307,12 @@ Item {
     }
     rawTodos.splice(insertIndex, 0, newTodo);
     saveTodos();
+
+    // Push to CalDAV if enabled
+    if (caldavEnabled) {
+      caldavSync.pushTodo(newTodo);
+    }
+
     return true;
   }
 
@@ -308,6 +341,11 @@ Item {
       saveTodos();
     }
 
+    // Push update to CalDAV if enabled
+    if (caldavEnabled && rawTodos[index]) {
+      caldavSync.pushTodo(rawTodos[index]);
+    }
+
     return true;
   }
 
@@ -316,8 +354,15 @@ Item {
     var index = findTodoIndex(id);
     if (index === -1)
       return false;
+    var todoUid = rawTodos[index].uid;
     rawTodos.splice(index, 1);
     saveTodos();
+
+    // Delete from CalDAV if enabled
+    if (caldavEnabled && todoUid) {
+      caldavSync.deleteTodoRemote(todoUid);
+    }
+
     return true;
   }
 
@@ -535,4 +580,91 @@ Item {
   function calculateCompletedCount() {
     return rawTodos.filter(t => t.completed).length;
   }
+
+  // ============================================
+  // CalDAV Sync Merge Logic
+  // ============================================
+
+  function _mergeRemoteTodos(remoteTodos) {
+    if (!remoteTodos || remoteTodos.length === 0) {
+      // No remote todos, push all local todos to server
+      _pushAllLocalTodos();
+      return;
+    }
+
+    var localByUid = {};
+    for (var i = 0; i < rawTodos.length; i++) {
+      if (rawTodos[i].uid) {
+        localByUid[rawTodos[i].uid] = rawTodos[i];
+      }
+    }
+
+    var remoteUids = {};
+    var currentPageId = pluginApi?.pluginSettings?.current_page_id ?? 0;
+    var changed = false;
+
+    // Merge remote → local
+    for (var r = 0; r < remoteTodos.length; r++) {
+      var remote = remoteTodos[r];
+      remoteUids[remote.uid] = true;
+
+      if (localByUid[remote.uid]) {
+        // Update existing local todo with remote data
+        var local = localByUid[remote.uid];
+        if (local.text !== remote.text || local.completed !== remote.completed ||
+            local.priority !== remote.priority || local.details !== remote.details) {
+          var idx = findTodoIndex(local.id);
+          if (idx !== -1) {
+            rawTodos[idx].text = remote.text;
+            rawTodos[idx].completed = remote.completed;
+            rawTodos[idx].priority = remote.priority;
+            rawTodos[idx].details = remote.details;
+            changed = true;
+          }
+        }
+      } else {
+        // New remote todo — add locally
+        var newTodo = {
+          id: Date.now() + r, // Ensure unique ID
+          uid: remote.uid,
+          text: remote.text,
+          completed: remote.completed,
+          createdAt: remote.createdAt,
+          pageId: currentPageId,
+          priority: remote.priority,
+          details: remote.details
+        };
+        rawTodos.push(newTodo);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      saveTodos();
+    }
+
+    // Push local-only todos to server
+    _pushAllLocalTodos();
+  }
+
+  function _pushAllLocalTodos() {
+    if (!caldavEnabled) return;
+    for (var i = 0; i < rawTodos.length; i++) {
+      if (rawTodos[i].uid) {
+        caldavSync.pushTodo(rawTodos[i]);
+      }
+    }
+  }
+
+  // Expose CalDAV sync for external use (e.g. Settings sync button)
+  function triggerCaldavSync() {
+    if (caldavEnabled) {
+      caldavSync.syncAll();
+    }
+  }
+
+  // Expose CalDAV sync state
+  readonly property bool caldavSyncing: caldavSync.isSyncing
+  readonly property string caldavLastSync: caldavSync.lastSyncTime
+  readonly property string caldavLastError: caldavSync.lastError
 }
