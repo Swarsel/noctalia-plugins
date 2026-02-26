@@ -22,6 +22,15 @@ ColumnLayout {
   // Reference to Main.qml instance for centralized data management
   readonly property var mainInstance: pluginApi?.mainInstance
 
+  // CalDAV settings properties
+  property bool valueCaldavEnabled: pluginApi?.pluginSettings?.caldavEnabled ?? false
+  property string valueCaldavUrl: pluginApi?.pluginSettings?.caldavUrl ?? ""
+  property string valueCaldavUsername: pluginApi?.pluginSettings?.caldavUsername ?? ""
+  property string valueCaldavPasswordType: pluginApi?.pluginSettings?.caldavPasswordType ?? "command"
+  property string valueCaldavPasswordCmd: pluginApi?.pluginSettings?.caldavPasswordCmd ?? ""
+  property string valueCaldavPasswordFile: pluginApi?.pluginSettings?.caldavPasswordFile ?? ""
+  property int valueCaldavSyncInterval: pluginApi?.pluginSettings?.caldavSyncInterval ?? 300
+
   spacing: Style.marginL
 
   Component.onCompleted: {
@@ -123,6 +132,189 @@ ColumnLayout {
         selectedColor: root.valueLowPriorityColor
         onColorSelected: function (color) {
           root.valueLowPriorityColor = color;
+        }
+      }
+    }
+  }
+
+  // CalDAV Sync section
+  ColumnLayout {
+    Layout.fillWidth: true
+    spacing: Style.marginS
+
+    NText {
+      text: pluginApi?.tr("settings.caldav.label")
+      font.pointSize: Style.fontSizeL
+      font.weight: Font.Bold
+      Layout.topMargin: Style.marginL
+    }
+
+    NToggle {
+      Layout.fillWidth: true
+      label: pluginApi?.tr("settings.caldav.enable_label")
+      description: pluginApi?.tr("settings.caldav.enable_description")
+      checked: root.valueCaldavEnabled
+      onToggled: function (checked) {
+        root.valueCaldavEnabled = checked;
+      }
+    }
+
+    // CalDAV configuration fields (visible only when enabled)
+    ColumnLayout {
+      Layout.fillWidth: true
+      spacing: Style.marginS
+      visible: root.valueCaldavEnabled
+
+      NTextInput {
+        Layout.fillWidth: true
+        placeholderText: pluginApi?.tr("settings.caldav.url_placeholder")
+        text: root.valueCaldavUrl
+        onTextChanged: root.valueCaldavUrl = text
+      }
+
+      NText {
+        text: pluginApi?.tr("settings.caldav.url_label")
+        font.pointSize: Style.fontSizeS
+        color: Color.mOnSurfaceVariant
+      }
+
+      NTextInput {
+        Layout.fillWidth: true
+        placeholderText: pluginApi?.tr("settings.caldav.username_placeholder")
+        text: root.valueCaldavUsername
+        onTextChanged: root.valueCaldavUsername = text
+      }
+
+      NText {
+        text: pluginApi?.tr("settings.caldav.username_label")
+        font.pointSize: Style.fontSizeS
+        color: Color.mOnSurfaceVariant
+      }
+
+      // Password source type selector
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginM
+
+        NText {
+          text: pluginApi?.tr("settings.caldav.password_type_label")
+          Layout.alignment: Qt.AlignVCenter
+        }
+
+        Row {
+          spacing: Style.marginS
+
+          NButton {
+            text: pluginApi?.tr("settings.caldav.password_type_command")
+            backgroundColor: root.valueCaldavPasswordType === "command" ? Color.mPrimary : Color.mSurfaceVariant
+            textColor: root.valueCaldavPasswordType === "command" ? Color.mOnPrimary : Color.mOnSurface
+            onClicked: root.valueCaldavPasswordType = "command"
+          }
+
+          NButton {
+            text: pluginApi?.tr("settings.caldav.password_type_file")
+            backgroundColor: root.valueCaldavPasswordType === "file" ? Color.mPrimary : Color.mSurfaceVariant
+            textColor: root.valueCaldavPasswordType === "file" ? Color.mOnPrimary : Color.mOnSurface
+            onClicked: root.valueCaldavPasswordType = "file"
+          }
+        }
+      }
+
+      // Password command input (visible when type is "command")
+      ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 2
+        visible: root.valueCaldavPasswordType === "command"
+
+        NTextInput {
+          Layout.fillWidth: true
+          placeholderText: pluginApi?.tr("settings.caldav.password_cmd_placeholder")
+          text: root.valueCaldavPasswordCmd
+          onTextChanged: root.valueCaldavPasswordCmd = text
+        }
+
+        NText {
+          text: pluginApi?.tr("settings.caldav.password_cmd_description")
+          font.pointSize: Style.fontSizeXS
+          color: Color.mOnSurfaceVariant
+        }
+      }
+
+      // Password file input (visible when type is "file")
+      ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 2
+        visible: root.valueCaldavPasswordType === "file"
+
+        NTextInput {
+          Layout.fillWidth: true
+          placeholderText: pluginApi?.tr("settings.caldav.password_file_placeholder")
+          text: root.valueCaldavPasswordFile
+          onTextChanged: root.valueCaldavPasswordFile = text
+        }
+
+        NText {
+          text: pluginApi?.tr("settings.caldav.password_file_description")
+          font.pointSize: Style.fontSizeXS
+          color: Color.mOnSurfaceVariant
+        }
+      }
+
+      // Sync interval
+      ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 2
+
+        NText {
+          text: {
+            var minutes = Math.floor(root.valueCaldavSyncInterval / 60);
+            return pluginApi?.tr("settings.caldav.sync_interval_description").replace("{minutes}", minutes);
+          }
+          font.pointSize: Style.fontSizeS
+          color: Color.mOnSurfaceVariant
+        }
+
+        Slider {
+          Layout.fillWidth: true
+          from: 60
+          to: 1800
+          stepSize: 60
+          value: root.valueCaldavSyncInterval
+          onValueChanged: root.valueCaldavSyncInterval = value
+        }
+      }
+
+      // Sync now + status row
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginM
+
+        NButton {
+          text: (mainInstance && mainInstance.caldavSyncing)
+                ? pluginApi?.tr("settings.caldav.sync_in_progress")
+                : pluginApi?.tr("settings.caldav.sync_now_button")
+          enabled: !(mainInstance && mainInstance.caldavSyncing)
+          onClicked: {
+            if (mainInstance) {
+              mainInstance.triggerCaldavSync();
+            }
+          }
+        }
+
+        NText {
+          text: {
+            if (mainInstance && mainInstance.caldavLastError) {
+              return pluginApi?.tr("settings.caldav.sync_error").replace("{error}", mainInstance.caldavLastError);
+            }
+            if (mainInstance && mainInstance.caldavLastSync) {
+              return pluginApi?.tr("settings.caldav.last_sync").replace("{time}", mainInstance.caldavLastSync);
+            }
+            return pluginApi?.tr("settings.caldav.never_synced");
+          }
+          font.pointSize: Style.fontSizeS
+          color: (mainInstance && mainInstance.caldavLastError) ? Color.mError : Color.mOnSurfaceVariant
+          Layout.fillWidth: true
+          elide: Text.ElideRight
         }
       }
     }
@@ -483,6 +675,15 @@ ColumnLayout {
         "low": Color.mOnSurfaceVariant.toString()
       };
     }
+
+    // Save CalDAV settings
+    pluginApi.pluginSettings.caldavEnabled = root.valueCaldavEnabled;
+    pluginApi.pluginSettings.caldavUrl = root.valueCaldavUrl;
+    pluginApi.pluginSettings.caldavUsername = root.valueCaldavUsername;
+    pluginApi.pluginSettings.caldavPasswordType = root.valueCaldavPasswordType;
+    pluginApi.pluginSettings.caldavPasswordCmd = root.valueCaldavPasswordCmd;
+    pluginApi.pluginSettings.caldavPasswordFile = root.valueCaldavPasswordFile;
+    pluginApi.pluginSettings.caldavSyncInterval = root.valueCaldavSyncInterval;
 
     pluginApi.saveSettings();
 

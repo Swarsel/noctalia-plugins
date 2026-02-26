@@ -66,3 +66,26 @@ qs -c noctalia-shell ipc call plugin:todo togglePanel
 - **Show Background**: Toggle desktop widget background visibility
 - **Custom Priority Colors**: Enable and configure custom colors for priority levels
 - **Priority Colors**: Customize the colors for high, medium, and low priority items
+
+### CalDAV Sync
+
+The plugin supports optional bidirectional sync with CalDAV servers such as [Radicale](https://radicale.org/), Nextcloud, or any RFC 4791 compliant server.
+
+#### Setup
+
+1. Enable **CalDAV Sync** in the plugin settings
+2. Enter your **Server URL** (the full URL to your CalDAV calendar collection, e.g. `https://radicale.example.com/user/calendar/`)
+3. Enter your **Username**
+4. Choose a **Password Source**:
+   - **Command**: A shell command that outputs the password (e.g. `pass show caldav/password`, `secret-tool lookup service caldav`)
+   - **File**: Path to a file containing the password (e.g. `~/.secrets/caldav-password`)
+5. Configure the **Sync Interval** (default: 5 minutes)
+
+> **Note**: The password is never stored in plugin settings. Only the command or file path is saved.
+
+#### How Sync Works
+
+- **Local → Remote**: Creating, editing, completing, or deleting a todo locally pushes the change to the CalDAV server
+- **Remote → Local**: On each sync interval (or manual sync), remote VTODOs are fetched and merged with local state
+- **Conflict resolution**: The CalDAV server is the source of truth (last-write-wins)
+- Todos are mapped to iCalendar VTODO objects using a stable UUID
