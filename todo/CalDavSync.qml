@@ -198,7 +198,20 @@ Item {
 
   function pushTodo(todo) {
     if (!root.enabled || !todo || !todo.uid) return;
-    _pushQueue.push(JSON.parse(JSON.stringify(todo)));
+
+    // Enrich todo with page name for CATEGORIES tag
+    var enriched = JSON.parse(JSON.stringify(todo));
+    if (root.mainInstance && root.mainInstance.rawPages) {
+      var pages = root.mainInstance.rawPages;
+      for (var i = 0; i < pages.length; i++) {
+        if (pages[i].id === todo.pageId) {
+          enriched._pageName = pages[i].name;
+          break;
+        }
+      }
+    }
+
+    _pushQueue.push(enriched);
 
     if (!putProcess.running) {
       _ensurePasswordThen(function() {
@@ -441,6 +454,11 @@ Item {
       lines.push("DESCRIPTION:" + _escapeIcalText(todo.details));
     }
 
+    // Add page name as CATEGORIES tag
+    if (todo._pageName) {
+      lines.push("CATEGORIES:" + _escapeIcalText(todo._pageName));
+    }
+
     if (todo.completed) {
       lines.push("COMPLETED:" + now);
     }
@@ -466,6 +484,7 @@ Item {
     var priorityVal = parseInt(_extractIcalProp(block, "PRIORITY") || "0");
     var description = _unescapeIcalText(_extractIcalProp(block, "DESCRIPTION") || "");
     var created = _extractIcalProp(block, "CREATED") || "";
+    var categories = _unescapeIcalText(_extractIcalProp(block, "CATEGORIES") || "");
 
     return {
       uid: uid,
@@ -474,6 +493,7 @@ Item {
       priority: _icalToPriority(priorityVal),
       details: description,
       createdAt: created ? _fromIcalDate(created) : new Date().toISOString(),
+      categories: categories,
       etag: etag,
       href: href,
       isRemote: true

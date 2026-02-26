@@ -624,13 +624,25 @@ Item {
         }
       } else {
         // New remote todo — add locally
+        // Match categories to page name
+        var targetPageId = currentPageId;
+        if (remote.categories && remote.categories.trim().length > 0) {
+          var catName = remote.categories.split(",")[0].trim(); // Use first category
+          for (var p = 0; p < rawPages.length; p++) {
+            if (rawPages[p].name === catName) {
+              targetPageId = rawPages[p].id;
+              break;
+            }
+          }
+        }
+
         var newTodo = {
           id: Date.now() + r, // Ensure unique ID
           uid: remote.uid,
           text: remote.text,
           completed: remote.completed,
           createdAt: remote.createdAt,
-          pageId: currentPageId,
+          pageId: targetPageId,
           priority: remote.priority,
           details: remote.details
         };
