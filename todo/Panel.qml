@@ -116,6 +116,20 @@ Item {
                 clearCompletedTodos();
               }
             }
+
+            NButton {
+              enabled: mainInstance && !mainInstance.caldavSyncing
+              text: (mainInstance && mainInstance.caldavSyncing)
+                    ? pluginApi?.tr("settings.caldav.sync_in_progress")
+                    : pluginApi?.tr("settings.caldav.sync_now_button")
+              icon: "refresh-cw"
+              fontSize: Style.fontSizeS
+              onClicked: {
+                if (mainInstance) {
+                  mainInstance.triggerCaldavSync();
+                }
+              }
+            }
           }
 
           // Page selector using tab components

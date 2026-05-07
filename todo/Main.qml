@@ -9,6 +9,7 @@ Item {
   property var pluginApi: null
   property var rawTodos: []
   property var rawPages: []
+  property var _dirtyTodoUids: ({})
 
   // CalDAV sync integration
   readonly property bool caldavEnabled: pluginApi?.pluginSettings?.caldavEnabled ?? false
@@ -18,8 +19,8 @@ Item {
     pluginApi: mainRoot.pluginApi
     mainInstance: mainRoot
 
-    onSyncCompleted: function(remoteTodos) {
-      _mergeRemoteTodos(remoteTodos);
+    onSyncCompleted: function(remoteTodos, syncConfig) {
+      _mergeRemoteTodos(remoteTodos, syncConfig);
     }
 
     onSyncError: function(message) {
@@ -310,6 +311,7 @@ Item {
 
     // Push to CalDAV if enabled
     if (caldavEnabled) {
+      _markTodoDirty(newTodo.uid);
       caldavSync.pushTodo(newTodo);
     }
 
@@ -341,9 +343,12 @@ Item {
       saveTodos();
     }
 
-    // Push update to CalDAV if enabled
-    if (caldavEnabled && rawTodos[index]) {
-      caldavSync.pushTodo(rawTodos[index]);
+    // Push update to CalDAV if enabled.
+    // Reordering may move the item, so resolve it again by ID.
+    var updatedTodo = findTodo(id);
+    if (caldavEnabled && updatedTodo && updatedTodo.uid) {
+      _markTodoDirty(updatedTodo.uid);
+      caldavSync.pushTodo(updatedTodo);
     }
 
     return true;
@@ -360,6 +365,7 @@ Item {
 
     // Delete from CalDAV if enabled
     if (caldavEnabled && todoUid) {
+      _clearTodoDirty(todoUid);
       caldavSync.deleteTodoRemote(todoUid);
     }
 
@@ -368,15 +374,36 @@ Item {
 
   // Clear all completed todos, return count cleared
   function clearCompletedTodos() {
-    var active = rawTodos.filter(t => !t.completed);
+    var deletedUids = [];
+    var active = [];
+
+    for (var i = 0; i < rawTodos.length; i++) {
+      if (rawTodos[i].completed) {
+        if (rawTodos[i].uid) {
+          deletedUids.push(rawTodos[i].uid);
+        }
+      } else {
+        active.push(rawTodos[i]);
+      }
+    }
+
     var cleared = rawTodos.length - active.length;
     rawTodos.splice(0, rawTodos.length, ...active);
     saveTodos();
+
+    if (caldavEnabled) {
+      for (var d = 0; d < deletedUids.length; d++) {
+        _clearTodoDirty(deletedUids[d]);
+        caldavSync.deleteTodoRemote(deletedUids[d]);
+      }
+    }
+
     return cleared;
   }
 
   // Clear all todos
   function clearAllTodos() {
+    _dirtyTodoUids = {};
     rawTodos.splice(0, rawTodos.length);
     saveTodos();
   }
@@ -389,6 +416,9 @@ Item {
                     name: name
                   });
     savePages();
+
+    _reassignTodosForPageName(newId, name);
+
     return true;
   }
 
@@ -401,6 +431,9 @@ Item {
       }
     }
     savePages();
+
+    _reassignTodosForPageName(pageId, newName);
+
     return true;
   }
 
@@ -585,10 +618,10 @@ Item {
   // CalDAV Sync Merge Logic
   // ============================================
 
-  function _mergeRemoteTodos(remoteTodos) {
+  function _mergeRemoteTodos(remoteTodos, syncConfig) {
     if (!remoteTodos || remoteTodos.length === 0) {
       // No remote todos, push all local todos to server
-      _pushAllLocalTodos();
+      _pushLocalOnlyTodos({}, syncConfig);
       return;
     }
 
@@ -602,6 +635,7 @@ Item {
     var remoteUids = {};
     var currentPageId = pluginApi?.pluginSettings?.current_page_id ?? 0;
     var changed = false;
+    var localWinsToPush = [];
 
     // Merge remote → local
     for (var r = 0; r < remoteTodos.length; r++) {
@@ -609,32 +643,37 @@ Item {
       remoteUids[remote.uid] = true;
 
       if (localByUid[remote.uid]) {
-        // Update existing local todo with remote data
+        // Update existing local todo with remote data unless there is a pending local change.
         var local = localByUid[remote.uid];
-        if (local.text !== remote.text || local.completed !== remote.completed ||
-            local.priority !== remote.priority || local.details !== remote.details) {
+        var remotePageId = _resolveTargetPageId(remote.categories, local.pageId);
+        var differs = local.text !== remote.text || local.completed !== remote.completed ||
+            local.priority !== remote.priority || local.details !== remote.details ||
+            local.pageId !== remotePageId;
+
+        if (_isTodoDirty(remote.uid)) {
+          if (differs) {
+            localWinsToPush.push(local.uid);
+          } else {
+            _clearTodoDirty(remote.uid);
+          }
+          continue;
+        }
+
+        if (differs) {
           var idx = findTodoIndex(local.id);
           if (idx !== -1) {
             rawTodos[idx].text = remote.text;
             rawTodos[idx].completed = remote.completed;
             rawTodos[idx].priority = remote.priority;
             rawTodos[idx].details = remote.details;
+            rawTodos[idx].categories = remote.categories || "";
+            rawTodos[idx].pageId = remotePageId;
             changed = true;
           }
         }
       } else {
         // New remote todo — add locally
-        // Match categories to page name
-        var targetPageId = currentPageId;
-        if (remote.categories && remote.categories.trim().length > 0) {
-          var catName = remote.categories.split(",")[0].trim(); // Use first category
-          for (var p = 0; p < rawPages.length; p++) {
-            if (rawPages[p].name === catName) {
-              targetPageId = rawPages[p].id;
-              break;
-            }
-          }
-        }
+        var targetPageId = _resolveTargetPageId(remote.categories, currentPageId);
 
         var newTodo = {
           id: Date.now() + r, // Ensure unique ID
@@ -644,7 +683,8 @@ Item {
           createdAt: remote.createdAt,
           pageId: targetPageId,
           priority: remote.priority,
-          details: remote.details
+          details: remote.details,
+          categories: remote.categories || ""
         };
         rawTodos.push(newTodo);
         changed = true;
@@ -655,23 +695,93 @@ Item {
       saveTodos();
     }
 
-    // Push local-only todos to server
-    _pushAllLocalTodos();
-  }
+    // Push only local todos that were missing remotely to avoid sync churn.
+    _pushLocalOnlyTodos(remoteUids, syncConfig);
 
-  function _pushAllLocalTodos() {
-    if (!caldavEnabled) return;
-    for (var i = 0; i < rawTodos.length; i++) {
-      if (rawTodos[i].uid) {
-        caldavSync.pushTodo(rawTodos[i]);
+    for (var l = 0; l < localWinsToPush.length; l++) {
+      var localTodo = localByUid[localWinsToPush[l]];
+      if (localTodo) {
+        caldavSync.pushTodo(localTodo, syncConfig);
       }
     }
   }
 
+  function _pushLocalOnlyTodos(remoteUids, syncConfig) {
+    if (!caldavEnabled) return;
+
+    for (var i = 0; i < rawTodos.length; i++) {
+      var uid = rawTodos[i].uid;
+      if (uid && !remoteUids[uid]) {
+        caldavSync.pushTodo(rawTodos[i], syncConfig);
+      }
+    }
+  }
+
+  function _normalizeTagName(value) {
+    return (value || "").trim().toLowerCase();
+  }
+
+  function _resolveTargetPageId(categories, fallbackPageId) {
+    if (!categories || categories.trim().length === 0) {
+      return fallbackPageId;
+    }
+
+    var categoryName = _normalizeTagName(categories.split(",")[0]);
+    if (!categoryName) {
+      return fallbackPageId;
+    }
+
+    for (var p = 0; p < rawPages.length; p++) {
+      if (_normalizeTagName(rawPages[p].name) === categoryName) {
+        return rawPages[p].id;
+      }
+    }
+
+    return fallbackPageId;
+  }
+
+  function _reassignTodosForPageName(pageId, pageName) {
+    var normalizedName = _normalizeTagName(pageName);
+    if (!normalizedName) {
+      return;
+    }
+
+    var changed = false;
+    for (var i = 0; i < rawTodos.length; i++) {
+      var categoryName = _normalizeTagName((rawTodos[i].categories || "").split(",")[0]);
+      if (categoryName && categoryName === normalizedName && rawTodos[i].pageId !== pageId) {
+        rawTodos[i].pageId = pageId;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      saveTodos();
+    }
+  }
+
+  function _markTodoDirty(uid) {
+    if (!uid) return;
+    var dirty = Object.assign({}, _dirtyTodoUids);
+    dirty[uid] = true;
+    _dirtyTodoUids = dirty;
+  }
+
+  function _clearTodoDirty(uid) {
+    if (!uid || !_dirtyTodoUids[uid]) return;
+    var dirty = Object.assign({}, _dirtyTodoUids);
+    delete dirty[uid];
+    _dirtyTodoUids = dirty;
+  }
+
+  function _isTodoDirty(uid) {
+    return !!(uid && _dirtyTodoUids[uid]);
+  }
+
   // Expose CalDAV sync for external use (e.g. Settings sync button)
-  function triggerCaldavSync() {
+  function triggerCaldavSync(syncConfig) {
     if (caldavEnabled) {
-      caldavSync.syncAll();
+      caldavSync.syncAll(syncConfig || null);
     }
   }
 

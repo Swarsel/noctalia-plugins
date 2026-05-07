@@ -25,8 +25,13 @@ Item {
   property string _cachedPassword: ""
 
   // Signals for Main.qml
-  signal syncCompleted(var remoteTodos)
+  signal syncCompleted(var remoteTodos, var syncConfig)
   signal syncError(string message)
+
+  // One-shot override config for manual sync (used only for the running sync call)
+  property var _syncOverride: null
+  property string _cachedPasswordKey: ""
+  property var _passwordRequestConfig: null
 
   // ============================================
   // Password Retrieval
@@ -35,11 +40,12 @@ Item {
   Process {
     id: passwordProcess
     command: {
-      if (root.passwordType === "file") {
-        return ["cat", root.passwordFile];
+      var cfg = root._passwordRequestConfig || root._buildAuthConfig(root._syncOverride);
+      if (cfg.passwordType === "file") {
+        return ["cat", cfg.passwordFile];
       } else {
         // "command" mode — split on spaces for simple commands
-        return ["sh", "-c", root.passwordCmd];
+        return ["sh", "-c", cfg.passwordCmd];
       }
     }
 
@@ -48,6 +54,10 @@ Item {
         var pw = this.text.trim();
         if (pw.length > 0) {
           root._cachedPassword = pw;
+          if (root._passwordRequestConfig) {
+            root._cachedPasswordKey = root._configKey(root._passwordRequestConfig);
+            root._passwordRequestConfig = null;
+          }
           root._startSync();
         } else {
           root._handleError("Password command/file returned empty result");
@@ -65,6 +75,7 @@ Item {
 
     onExited: function(exitCode, exitStatus) {
       if (exitCode !== 0) {
+        root._passwordRequestConfig = null;
         root._handleError("Password retrieval failed (exit code " + exitCode + ")");
       }
     }
@@ -81,7 +92,14 @@ Item {
         root._handlePropfindResponse(this.text);
       }
     }
-    stderr: StdioCollector {}
+    stderr: StdioCollector {
+      onStreamFinished: {
+        root._propfindStderr = this.text.trim();
+        if (root._propfindStderr.length > 0) {
+          Logger.w("CalDavSync", "PROPFIND stderr: " + root._propfindStderr);
+        }
+      }
+    }
 
     onExited: function(exitCode, exitStatus) {
       if (exitCode !== 0 && !root._propfindHandled) {
@@ -91,6 +109,7 @@ Item {
   }
 
   property bool _propfindHandled: false
+  property string _propfindStderr: ""
 
   // ============================================
   // CalDAV GET (individual VTODO)
@@ -170,16 +189,20 @@ Item {
     interval: root.syncInterval * 1000
     repeat: true
     running: root.enabled && root.serverUrl.length > 0
-    onTriggered: root.syncAll()
+    onTriggered: root.syncAll(null)
   }
 
   // ============================================
   // Public API
   // ============================================
 
-  function syncAll() {
+  function syncAll(syncConfig) {
     if (!root.enabled || root.isSyncing) return;
-    if (!root.serverUrl || root.serverUrl.trim() === "") {
+
+    root._syncOverride = syncConfig ? root._buildAuthConfig(syncConfig) : null;
+    var cfg = root._buildAuthConfig(root._syncOverride);
+
+    if (!cfg.serverUrl || cfg.serverUrl.trim() === "") {
       _handleError("CalDAV server URL is not configured");
       return;
     }
@@ -189,18 +212,19 @@ Item {
     root.lastError = "";
 
     // Step 1: Retrieve password, then start sync
-    if (root._cachedPassword.length > 0) {
+    if (root._cachedPassword.length > 0 && root._cachedPasswordKey === root._configKey(cfg)) {
       _startSync();
     } else {
-      _fetchPassword();
+      _fetchPassword(root._syncOverride);
     }
   }
 
-  function pushTodo(todo) {
+  function pushTodo(todo, syncConfig) {
     if (!root.enabled || !todo || !todo.uid) return;
 
     // Enrich todo with page name for CATEGORIES tag
     var enriched = JSON.parse(JSON.stringify(todo));
+    enriched._syncConfig = syncConfig ? root._buildAuthConfig(syncConfig) : null;
     if (root.mainInstance && root.mainInstance.rawPages) {
       var pages = root.mainInstance.rawPages;
       for (var i = 0; i < pages.length; i++) {
@@ -214,47 +238,49 @@ Item {
     _pushQueue.push(enriched);
 
     if (!putProcess.running) {
-      _ensurePasswordThen(function() {
-        _processNextPush();
-      });
+      _processNextPush();
     }
   }
 
-  function deleteTodoRemote(uid) {
+  function deleteTodoRemote(uid, syncConfig) {
     if (!root.enabled || !uid) return;
+    var cfg = root._buildAuthConfig(syncConfig);
     _ensurePasswordThen(function() {
-      var url = _normalizeUrl(root.serverUrl) + uid + ".ics";
+      var url = _normalizeUrl(cfg.serverUrl) + uid + ".ics";
       deleteProcess.currentUid = uid;
       deleteProcess.command = [
         "curl", "-s", "--max-time", "15",
         "-X", "DELETE",
-        "-u", root.username + ":" + root._cachedPassword,
+        "-u", cfg.username + ":" + root._cachedPassword,
         url
       ];
       deleteProcess.running = true;
-    });
+    }, syncConfig);
   }
 
   // ============================================
   // Internal Implementation
   // ============================================
 
-  function _fetchPassword() {
-    if ((root.passwordType === "command" && (!root.passwordCmd || root.passwordCmd.trim() === "")) ||
-        (root.passwordType === "file" && (!root.passwordFile || root.passwordFile.trim() === ""))) {
-      _handleError("No password " + root.passwordType + " configured");
+  function _fetchPassword(syncConfig) {
+    var cfg = root._buildAuthConfig(syncConfig);
+    if ((cfg.passwordType === "command" && (!cfg.passwordCmd || cfg.passwordCmd.trim() === "")) ||
+        (cfg.passwordType === "file" && (!cfg.passwordFile || cfg.passwordFile.trim() === ""))) {
+      _handleError("No password " + cfg.passwordType + " configured");
       return;
     }
+    root._passwordRequestConfig = cfg;
     passwordProcess.running = true;
   }
 
-  function _ensurePasswordThen(callback) {
-    if (root._cachedPassword.length > 0) {
+  function _ensurePasswordThen(callback, syncConfig) {
+    var cfg = root._buildAuthConfig(syncConfig);
+    if (root._cachedPassword.length > 0 && root._cachedPasswordKey === root._configKey(cfg)) {
       callback();
     } else {
       // Simple approach: fetch password and use a timer to wait
       root._pendingCallback = callback;
-      _fetchPassword();
+      _fetchPassword(syncConfig);
     }
   }
 
@@ -276,8 +302,10 @@ Item {
     root._pendingGets = [];
     root._completedGets = 0;
     root._totalGets = 0;
+    root._propfindStderr = "";
 
-    var url = _normalizeUrl(root.serverUrl);
+    var cfg = root._buildAuthConfig(root._syncOverride);
+    var url = _normalizeUrl(cfg.serverUrl);
 
     var propfindBody = '<?xml version="1.0" encoding="utf-8"?>' +
       '<d:propfind xmlns:d="DAV:" xmlns:cs="urn:ietf:params:xml:ns:caldav">' +
@@ -285,27 +313,67 @@ Item {
       '</d:propfind>';
 
     propfindProcess.command = [
-      "curl", "-s", "--max-time", "20",
+      "curl", "-sS", "--max-time", "20",
       "-X", "PROPFIND",
       "-H", "Depth: 1",
       "-H", "Content-Type: application/xml; charset=utf-8",
-      "-u", root.username + ":" + root._cachedPassword,
+      "-u", cfg.username + ":" + root._cachedPassword,
       "-d", propfindBody,
+      "-w", "\n__NOCTALIA_HTTP_STATUS__:%{http_code}",
       url
     ];
     propfindProcess.running = true;
   }
 
+  function _splitCurlStatusPayload(rawText) {
+    var marker = "__NOCTALIA_HTTP_STATUS__:";
+    var text = rawText || "";
+    var idx = text.lastIndexOf(marker);
+    if (idx === -1) {
+      return {
+        body: text,
+        httpCode: 0
+      };
+    }
+
+    var body = text.substring(0, idx);
+    var statusText = text.substring(idx + marker.length).trim();
+    var statusCode = parseInt(statusText);
+    return {
+      body: body,
+      httpCode: isNaN(statusCode) ? 0 : statusCode
+    };
+  }
+
   function _handlePropfindResponse(responseText) {
     root._propfindHandled = true;
 
-    if (!responseText || responseText.trim() === "") {
-      _handleError("Empty PROPFIND response");
+    var parsed = _splitCurlStatusPayload(responseText);
+    var body = (parsed.body || "").trim();
+    var httpCode = parsed.httpCode;
+
+    if (httpCode >= 400) {
+      _handleError("PROPFIND failed with HTTP " + httpCode + (root._propfindStderr ? (": " + root._propfindStderr) : ""));
+      return;
+    }
+
+    if (httpCode >= 300 && httpCode < 400) {
+      _handleError("PROPFIND returned redirect (HTTP " + httpCode + "). Check that the CalDAV URL points directly to the calendar collection.");
+      return;
+    }
+
+    if (body.length === 0) {
+      _handleError("Empty PROPFIND response" + (httpCode > 0 ? (" (HTTP " + httpCode + ")") : "") + (root._propfindStderr ? (": " + root._propfindStderr) : ""));
+      return;
+    }
+
+    if (body.indexOf("<") !== 0) {
+      _handleError("Unexpected PROPFIND response format" + (httpCode > 0 ? (" (HTTP " + httpCode + ")") : "") + ".");
       return;
     }
 
     // Parse the multistatus XML response to extract hrefs and etags
-    var entries = _parsePropfindXml(responseText);
+    var entries = _parsePropfindXml(body);
 
     if (entries.length === 0) {
       Logger.i("CalDavSync", "No remote VTODOs found");
@@ -363,13 +431,14 @@ Item {
     }
 
     var entry = root._pendingGets.shift();
-    var url = _resolveHref(entry.href);
+    var cfg = root._buildAuthConfig(root._syncOverride);
+    var url = _resolveHref(entry.href, cfg.serverUrl);
 
     getProcess.currentHref = entry.href;
     getProcess.currentEtag = entry.etag;
     getProcess.command = [
       "curl", "-s", "--max-time", "15",
-      "-u", root.username + ":" + root._cachedPassword,
+      "-u", cfg.username + ":" + root._cachedPassword,
       url
     ];
     getProcess.running = true;
@@ -399,8 +468,11 @@ Item {
     root.lastSyncTime = new Date().toLocaleString();
     root.lastError = "";
 
-    // Push local-only todos to server after pull
-    syncCompleted(root._fetchedRemoteTodos);
+    var completedSyncConfig = root._syncOverride;
+    root._syncOverride = null;
+
+    // Let Main.qml decide merge and push strategy
+    syncCompleted(root._fetchedRemoteTodos, completedSyncConfig);
   }
 
   // ============================================
@@ -411,19 +483,29 @@ Item {
     if (root._pushQueue.length === 0) return;
 
     var todo = root._pushQueue.shift();
-    var icsData = _todoToVtodo(todo);
-    var url = _normalizeUrl(root.serverUrl) + todo.uid + ".ics";
+    var cfg = root._buildAuthConfig(todo._syncConfig);
 
-    putProcess.currentUid = todo.uid;
-    putProcess.command = [
-      "curl", "-s", "--max-time", "15",
-      "-X", "PUT",
-      "-H", "Content-Type: text/calendar; charset=utf-8",
-      "-u", root.username + ":" + root._cachedPassword,
-      "-d", icsData,
-      url
-    ];
-    putProcess.running = true;
+    if (!cfg.serverUrl || !cfg.username) {
+      Logger.e("CalDavSync", "Skipping PUT for UID " + todo.uid + ": missing server URL or username");
+      _processNextPush();
+      return;
+    }
+
+    _ensurePasswordThen(function() {
+      var icsData = _todoToVtodo(todo);
+      var url = _normalizeUrl(cfg.serverUrl) + todo.uid + ".ics";
+
+      putProcess.currentUid = todo.uid;
+      putProcess.command = [
+        "curl", "-s", "--max-time", "15",
+        "-X", "PUT",
+        "-H", "Content-Type: text/calendar; charset=utf-8",
+        "-u", cfg.username + ":" + root._cachedPassword,
+        "-d", icsData,
+        url
+      ];
+      putProcess.running = true;
+    }, todo._syncConfig);
   }
 
   // ============================================
@@ -555,19 +637,37 @@ Item {
     return url.endsWith("/") ? url : url + "/";
   }
 
-  function _resolveHref(href) {
+  function _resolveHref(href, baseServerUrl) {
+    var serverUrl = baseServerUrl || root.serverUrl;
+
     // If href is absolute (starts with /), construct full URL from server URL
     if (href.startsWith("http://") || href.startsWith("https://")) {
       return href;
     }
 
     // Extract origin from server URL
-    var originMatch = root.serverUrl.match(/^(https?:\/\/[^\/]+)/);
+    var originMatch = serverUrl.match(/^(https?:\/\/[^\/]+)/);
     if (originMatch) {
       return originMatch[1] + href;
     }
 
-    return root.serverUrl + href;
+    return serverUrl + href;
+  }
+
+  function _buildAuthConfig(syncConfig) {
+    var cfg = syncConfig || {};
+    return {
+      serverUrl: cfg.serverUrl !== undefined ? cfg.serverUrl : root.serverUrl,
+      username: cfg.username !== undefined ? cfg.username : root.username,
+      passwordType: cfg.passwordType !== undefined ? cfg.passwordType : root.passwordType,
+      passwordCmd: cfg.passwordCmd !== undefined ? cfg.passwordCmd : root.passwordCmd,
+      passwordFile: cfg.passwordFile !== undefined ? cfg.passwordFile : root.passwordFile
+    };
+  }
+
+  function _configKey(cfg) {
+    if (!cfg) return "";
+    return [cfg.username || "", cfg.passwordType || "", cfg.passwordCmd || "", cfg.passwordFile || ""].join("|");
   }
 
   // ============================================
@@ -579,6 +679,9 @@ Item {
     root.isSyncing = false;
     root.lastError = message;
     root._cachedPassword = ""; // Clear cached password on error
+    root._cachedPasswordKey = "";
+    root._syncOverride = null;
+    root._passwordRequestConfig = null;
     syncError(message);
   }
 

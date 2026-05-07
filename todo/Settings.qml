@@ -296,7 +296,13 @@ ColumnLayout {
           enabled: !(mainInstance && mainInstance.caldavSyncing)
           onClicked: {
             if (mainInstance) {
-              mainInstance.triggerCaldavSync();
+              mainInstance.triggerCaldavSync({
+                                               serverUrl: root.valueCaldavUrl,
+                                               username: root.valueCaldavUsername,
+                                               passwordType: root.valueCaldavPasswordType,
+                                               passwordCmd: root.valueCaldavPasswordCmd,
+                                               passwordFile: root.valueCaldavPasswordFile
+                                             });
             }
           }
         }
